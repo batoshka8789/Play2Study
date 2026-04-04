@@ -1,453 +1,3220 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Play2Study RPG | Pro Version</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-dark: #09090e; --card-bg: rgba(255, 255, 255, 0.03); --card-border: rgba(255, 255, 255, 0.08);
-      --primary: #7873f5; --secondary: #ff6ec4; --accent: #4facfe; --gem: #00e676;
-      --text: #ffffff; --text-muted: #a0a0b0; --radius: 20px;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text); overflow-x: hidden; min-height: 100vh; }
-    
-    .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1; animation: float 10s infinite ease-in-out alternate; }
-    .orb-1 { top:-10%; left:-10%; width:40vw; height:40vw; background:rgba(120,115,245,0.25); }
-    .orb-2 { bottom:-10%; right:-10%; width:50vw; height:50vw; background:rgba(255,110,196,0.15); animation-delay:-5s; }
-    @keyframes float { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(30px,50px) scale(1.1); } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AETHER PROTOCOL — Алхимический Терминал</title>
+<link rel="preconnect" href="[fonts.googleapis.com](https://fonts.googleapis.com)">
+<link rel="preconnect" href="[fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+<link href="[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap)" rel="stylesheet">
+<style>
+/* ============================================================
+   AETHER PROTOCOL — CORE VARIABLES & RESET
+   ============================================================ */
+:root {
+  --void: #030303;
+  --void-02: #060608;
+  --void-03: #0a0a0f;
+  --void-04: #0f0f17;
+  --void-05: #14141e;
+  --void-06: #1a1a26;
+  --emerald: #10B981;
+  --emerald-dim: #0d9268;
+  --emerald-glow: rgba(16,185,129,0.15);
+  --emerald-border: rgba(16,185,129,0.3);
+  --violet: #6366F1;
+  --violet-dim: #4f51c4;
+  --violet-glow: rgba(99,102,241,0.15);
+  --violet-border: rgba(99,102,241,0.3);
+  --crimson: #EF4444;
+  --crimson-glow: rgba(239,68,68,0.15);
+  --amber: #F59E0B;
+  --amber-glow: rgba(245,158,11,0.15);
+  --ice: #67E8F9;
+  --ice-glow: rgba(103,232,249,0.1);
+  --text-prime: #E2E8F0;
+  --text-sec: #94A3B8;
+  --text-muted: #475569;
+  --text-ghost: #1e293b;
+  --glass-bg: rgba(10,10,15,0.7);
+  --glass-border: rgba(255,255,255,0.04);
+  --glass-blur: blur(40px);
+  --panel-border: 0.5px solid rgba(255,255,255,0.06);
+  --font-intel: 'Inter', sans-serif;
+  --font-tact: 'JetBrains Mono', monospace;
+  --dock-h: 72px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 0.5s cubic-bezier(0.4,0,0.2,1);
+}
 
-    .logo-text, .stat-value, .highlight-text { background: linear-gradient(90deg, var(--secondary), var(--primary), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; display: inline-block; }
-    .gem-text { color: var(--gem); font-weight: 800; text-shadow: 0 0 10px rgba(0, 230, 118, 0.4); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Modals & Auth */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-overlay.active { display: flex; }
-    .modal-box { background: var(--bg-dark); border: 1px solid var(--primary); padding: 30px; border-radius: var(--radius); width: 100%; max-width: 350px; text-align: center; box-shadow: 0 0 50px rgba(120, 115, 245, 0.3); }
-    
-    .auth-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    .auth-container { width: 100%; max-width: 420px; border-radius: var(--radius); background: rgba(20,20,30,0.6); backdrop-filter: blur(25px); border: 1px solid var(--card-border); box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; position:relative; }
-    .form-slider { display: flex; width: 200%; transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-    .form-box { width: 50%; padding: 40px; }
-    .input-group { margin-bottom: 15px; }
-    .input-group label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; display: block; text-transform: uppercase; font-weight: 600; }
-    .input-group input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.3); color: white; outline: none; transition: 0.3s; }
-    .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(120, 115, 245, 0.2); }
-    
-    .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; color: white; background: linear-gradient(90deg, var(--secondary), var(--primary), var(--accent)); transition: 0.3s; }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(120, 115, 245, 0.4); }
-    .btn:disabled { filter: grayscale(1); cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.5; }
-    
-    .auth-tabs { display: flex; border-bottom: 1px solid var(--card-border); }
-    .auth-tab { flex: 1; text-align: center; padding: 15px; cursor: pointer; color: var(--text-muted); font-weight: 600; transition: 0.3s; }
-    .auth-tab.active { color: white; border-bottom: 2px solid var(--primary); background: rgba(255,255,255,0.03); }
+html { font-size: 14px; scroll-behavior: smooth; }
 
-    /* App Layout */
-    .app-layout { display: none; max-width: 1400px; margin: 0 auto; padding: 30px 20px; gap: 30px; height: 100vh; }
-    .app-layout.active { display: flex; }
-    .sidebar { width: 260px; display: flex; flex-direction: column; gap: 8px; }
-    .nav-item { padding: 14px 20px; border-radius: 14px; cursor: pointer; color: var(--text-muted); font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap:10px; }
-    .nav-item:hover { background: var(--card-bg); color: white; transform: translateX(5px); }
-    .nav-item.active { background: rgba(120, 115, 245, 0.15); color: white; border: 1px solid rgba(120, 115, 245, 0.3); }
+body {
+  background: var(--void);
+  color: var(--text-prime);
+  font-family: var(--font-intel);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
-    .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding-right: 15px; padding-bottom: 50px; }
-    .main-content::-webkit-scrollbar { width: 5px; } .main-content::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
-    
-    /* Профиль 2.0 */
-    .profile-card { background: linear-gradient(145deg, rgba(20,20,30,0.8), rgba(10,10,15,0.8)); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-    .profile-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(120, 115, 245, 0.1) 0%, transparent 60%); pointer-events: none; }
-    .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, var(--secondary), var(--accent)); border-radius: 25px; display: flex; justify-content: center; align-items: center; font-size: 35px; font-weight: 800; border: 3px solid rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index:1; }
-    
-    .rank-badge { background: linear-gradient(90deg, #ffd700, #ff8c00); padding: 5px 12px; border-radius: 8px; font-size: 11px; color: #000; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-top: 8px; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
-    .gem-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(0, 230, 118, 0.3); }
-    
-    .xp-bar-container { flex: 1; max-width: 450px; margin-left: 40px; z-index:1; }
-    .xp-bar { height: 14px; background: rgba(0,0,0,0.5); border-radius: 20px; border: 1px solid var(--card-border); overflow: hidden; margin-top: 8px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-    .xp-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; transition: 1s cubic-bezier(0.22, 1, 0.36, 1); position: relative; }
-    .xp-fill::after { content: ''; position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shine 2s infinite; }
-    
-    /* Сетки и карточки */
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-    .stat-box { background: var(--card-bg); border: 1px solid var(--card-border); padding: 20px; border-radius: var(--radius); text-align: center; transition: 0.3s; display: flex; flex-direction: column; justify-content: center; }
-    .stat-box:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: var(--emerald-dim); border-radius: 2px; }
 
-    .split-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-    .tasks-list { display: flex; flex-direction: column; gap: 15px; }
-    
-    .task-card { background: rgba(20,20,30,0.7); border: 1px solid var(--card-border); padding: 25px; border-radius: 18px; position:relative; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
-    .task-card:hover { border-color: var(--primary); transform: scale(1.02); }
-    .task-card.daily { border-left: 4px solid var(--secondary); }
-    .task-card.main { border-left: 4px solid var(--accent); }
-    .task-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--card-border); margin-top: 20px; padding-top: 15px; }
+/* ============================================================
+   BACKGROUND GRID SYSTEM
+   ============================================================ */
+#bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
 
-    /* Магазин */
-    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-    .shop-item { background: var(--card-bg); border: 1px solid var(--card-border); padding: 25px; border-radius: var(--radius); text-align: center; transition: 0.3s; }
-    .shop-item:hover { border-color: var(--gem); box-shadow: 0 10px 30px rgba(0, 230, 118, 0.1); }
-    .shop-icon { font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+#bg-radial {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.06) 0%, transparent 70%),
+              radial-gradient(ellipse 50% 40% at 0% 100%, rgba(16,185,129,0.04) 0%, transparent 60%);
+}
 
-    /* Лидерборд */
-    .lb-item { display: flex; align-items: center; padding: 20px 25px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 15px; margin-bottom: 12px; transition: 0.3s; }
-    .lb-item:hover { background: rgba(255,255,255,0.05); transform: translateX(5px); }
-    
-    #toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-    .toast { background: rgba(15,15,25,0.95); backdrop-filter: blur(10px); border-left: 5px solid var(--primary); padding: 18px 25px; border-radius: 12px; color: white; transform: translateX(130%); transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); min-width: 300px; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
-    .toast.show { transform: translateX(0); }
-    .section { display: none; animation: slideUp 0.4s ease forwards; } .section.active { display: block; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+/* ============================================================
+   LAYOUT SHELL
+   ============================================================ */
+#app {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  padding-bottom: calc(var(--dock-h) + 24px);
+}
 
-    @media (max-width: 900px) {
-      .app-layout { flex-direction: column; padding: 15px; }
-      .sidebar { width: 100%; flex-direction: row; overflow-x: auto; position: sticky; top: 0; background: var(--bg-dark); z-index: 100; padding: 10px 0; }
-      .nav-item { white-space: nowrap; font-size: 13px; padding: 10px 15px; }
-      .profile-card { flex-direction: column; gap: 20px; text-align: center; }
-      .xp-bar-container { margin-left: 0; width: 100%; }
-      .split-dashboard { grid-template-columns: 1fr; }
-    }
-  </style>
+/* ============================================================
+   COMMAND HEADER
+   ============================================================ */
+#cmd-header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(3,3,3,0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: var(--panel-border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.header-brand {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.brand-sigil {
+  width: 32px; height: 32px;
+  border: 0.5px solid var(--emerald);
+  transform: rotate(45deg);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(16,185,129,0.3), inset 0 0 8px rgba(16,185,129,0.1);
+}
+
+.brand-sigil::before {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  background: var(--emerald);
+  transform: rotate(0deg);
+  opacity: 0.8;
+  animation: sigil-pulse 3s ease-in-out infinite;
+}
+
+@keyframes sigil-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.brand-text {
+  font-family: var(--font-tact);
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--emerald);
+  text-transform: uppercase;
+}
+
+.brand-sub {
+  font-family: var(--font-tact);
+  font-size: 9px; font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  display: block; margin-top: 1px;
+}
+
+.header-stats {
+  display: flex; align-items: center; gap: 20px;
+}
+
+.hstat {
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+
+.hstat-label {
+  font-family: var(--font-tact);
+  font-size: 8px; letter-spacing: 0.15em;
+  color: var(--text-muted); text-transform: uppercase;
+}
+
+.hstat-val {
+  font-family: var(--font-tact);
+  font-size: 13px; font-weight: 600;
+}
+
+.hstat-val.emerald { color: var(--emerald); }
+.hstat-val.violet { color: var(--violet); }
+.hstat-val.crimson { color: var(--crimson); }
+
+.hp-bar-wrap {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.hp-bar-track {
+  width: 80px; height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px; overflow: hidden;
+  position: relative;
+}
+
+.hp-bar-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--emerald-dim), var(--emerald));
+  transition: width 0.5s ease, background 0.3s ease;
+  box-shadow: 0 0 6px var(--emerald);
+}
+
+/* ============================================================
+   VIEWS SYSTEM
+   ============================================================ */
+.view { display: none; padding: 24px; }
+.view.active { display: block; }
+
+/* ============================================================
+   GLASSMORPHIC PANELS
+   ============================================================ */
+.panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--panel-border);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.panel-header {
+  padding: 14px 18px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.panel-title {
+  font-family: var(--font-tact);
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-sec);
+}
+
+.panel-title.emerald { color: var(--emerald); }
+.panel-title.violet { color: var(--violet); }
+
+.panel-body { padding: 18px; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  font-family: var(--font-tact);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border: none; cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 1px;
+  transition: var(--transition);
+  position: relative; overflow: hidden;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0);
+  transition: var(--transition);
+}
+
+.btn:hover::after { background: rgba(255,255,255,0.05); }
+.btn:active { transform: scale(0.98); }
+
+.btn-emerald {
+  background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.1));
+  border: 0.5px solid var(--emerald);
+  color: var(--emerald);
+  box-shadow: 0 0 12px rgba(16,185,129,0.1);
+}
+
+.btn-emerald:hover {
+  box-shadow: 0 0 20px rgba(16,185,129,0.25);
+  background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.15));
+}
+
+.btn-violet {
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.1));
+  border: 0.5px solid var(--violet);
+  color: var(--violet);
+  box-shadow: 0 0 12px rgba(99,102,241,0.1);
+}
+
+.btn-violet:hover {
+  box-shadow: 0 0 20px rgba(99,102,241,0.25);
+}
+
+.btn-crimson {
+  background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1));
+  border: 0.5px solid var(--crimson);
+  color: var(--crimson);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  color: var(--text-sec);
+}
+
+.btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text-prime); }
+
+.btn-sm { padding: 5px 10px; font-size: 9px; }
+.btn-lg { padding: 12px 24px; font-size: 12px; }
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+.field {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field label {
+  font-family: var(--font-tact);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field input, .field select, .field textarea {
+  background: rgba(255,255,255,0.03);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  color: var(--text-prime);
+  font-family: var(--font-tact);
+  font-size: 12px;
+  padding: 9px 12px;
+  border-radius: 1px;
+  transition: var(--transition);
+  outline: none;
+  width: 100%;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--emerald);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.1);
+  background: rgba(16,185,129,0.04);
+}
+
+.field select option { background: var(--void-04); color: var(--text-prime); }
+.field textarea { resize: vertical; min-height: 60px; }
+
+/* ============================================================
+   RANK BADGES
+   ============================================================ */
+.rank-badge {
+  font-family: var(--font-tact);
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 1px;
+  display: inline-block;
+}
+
+.rank-D { background: rgba(148,163,184,0.1); border: 0.5px solid rgba(148,163,184,0.3); color: #94A3B8; }
+.rank-C { background: rgba(34,197,94,0.1); border: 0.5px solid rgba(34,197,94,0.3); color: #22C55E; }
+.rank-B { background: rgba(59,130,246,0.1); border: 0.5px solid rgba(59,130,246,0.3); color: #3B82F6; }
+.rank-A { background: rgba(168,85,247,0.1); border: 0.5px solid rgba(168,85,247,0.3); color: #A855F7; }
+.rank-S { background: rgba(245,158,11,0.15); border: 0.5px solid rgba(245,158,11,0.5); color: var(--amber); box-shadow: 0 0 8px rgba(245,158,11,0.2); }
+
+/* ============================================================
+   COMMAND DOCK
+   ============================================================ */
+#cmd-dock {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: var(--dock-h);
+  background: rgba(3,3,3,0.92);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 0.5px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px;
+  padding: 0 16px;
+}
+
+.dock-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 12px;
+  border: none; background: transparent; cursor: pointer;
+  border-radius: 2px;
+  transition: var(--transition);
+  min-width: 56px;
+  position: relative;
+}
+
+.dock-btn:hover { background: rgba(255,255,255,0.04); }
+
+.dock-btn.active { background: rgba(16,185,129,0.08); }
+
+.dock-btn.active::before {
+  content: '';
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 1px;
+  background: var(--emerald);
+  box-shadow: 0 0 6px var(--emerald);
+}
+
+.dock-icon {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.dock-icon svg {
+  width: 18px; height: 18px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 1.5;
+  transition: var(--transition);
+}
+
+.dock-btn.active .dock-icon svg { stroke: var(--emerald); }
+.dock-btn:hover .dock-icon svg { stroke: var(--text-sec); }
+
+.dock-label {
+  font-family: var(--font-tact);
+  font-size: 8px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.dock-btn.active .dock-label { color: var(--emerald); }
+.dock-btn:hover .dock-label { color: var(--text-sec); }
+
+/* ============================================================
+   DASHBOARD VIEW
+   ============================================================ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+
+.stat-card {
+  padding: 16px 18px;
+  border: var(--panel-border);
+  background: rgba(10,10,15,0.6);
+  backdrop-filter: blur(20px);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--emerald), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-card:hover::after { opacity: 0.6; }
+
+.stat-label {
+  font-family: var(--font-tact);
+  font-size: 8px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: var(--font-tact);
+  font-size: 28px; font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-sub {
+  font-family: var(--font-tact);
+  font-size: 10px; color: var(--text-muted);
+}
+
+.xp-bar-wrap {
+  margin-top: 8px;
+}
+
+.xp-bar-track {
+  height: 3px; background: rgba(255,255,255,0.05);
+  border-radius: 2px; overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet-dim), var(--violet));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 6px rgba(99,102,241,0.5);
+}
+
+/* ============================================================
+   MISSION MATRIX
+   ============================================================ */
+.mission-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px;
+  border: 0.5px solid rgba(255,255,255,0.05);
+  border-radius: 1px;
+  margin-bottom: 6px;
+  background: rgba(255,255,255,0.015);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-item::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--text-ghost);
+  transition: background 0.3s;
+}
+
+.mission-item[data-rank="D"]::before { background: #94A3B8; }
+.mission-item[data-rank="C"]::before { background: #22C55E; }
+.mission-item[data-rank="B"]::before { background: #3B82F6; }
+.mission-item[data-rank="A"]::before { background: #A855F7; }
+.mission-item[data-rank="S"]::before { background: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+
+.mission-item:hover { background: rgba(255,255,255,0.03); }
+.mission-item.completed { opacity: 0.45; }
+.mission-item.completed .mission-title { text-decoration: line-through; text-decoration-color: rgba(16,185,129,0.5); }
+
+.mission-check {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border: 0.5px solid rgba(255,255,255,0.2);
+  border-radius: 1px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px;
+  transition: var(--transition);
+  background: transparent;
+}
+
+.mission-check:hover { border-color: var(--emerald); }
+.mission-check.checked { background: rgba(16,185,129,0.2); border-color: var(--emerald); }
+
+.mission-check svg { width: 10px; height: 10px; stroke: var(--emerald); fill: none; stroke-width: 2.5; opacity: 0; transition: opacity 0.2s; }
+.mission-check.checked svg { opacity: 1; }
+
+.mission-info { flex: 1; min-width: 0; }
+
+.mission-title {
+  font-family: var(--font-intel);
+  font-size: 13px; font-weight: 500;
+  color: var(--text-prime);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.mission-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+.mission-reward {
+  font-family: var(--font-tact);
+  font-size: 10px; color: var(--emerald);
+  opacity: 0.8;
+}
+
+.mission-actions {
+  display: flex; gap: 4px; align-items: flex-start;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(3,3,3,0.85);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--void-04);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 2px;
+  width: 100%; max-width: 480px;
+  max-height: 85vh; overflow-y: auto;
+  transform: translateY(12px);
+  transition: transform 0.25s ease;
+  position: relative;
+}
+
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-header {
+  padding: 18px 20px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0;
+  background: var(--void-04);
+  z-index: 1;
+}
+
+.modal-title {
+  font-family: var(--font-tact);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--emerald);
+}
+
+.modal-close {
+  width: 24px; height: 24px;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 1px; color: var(--text-sec);
+  font-size: 14px; transition: var(--transition);
+}
+
+.modal-close:hover { border-color: var(--crimson); color: var(--crimson); }
+.modal-body { padding: 20px; }
+
+/* ============================================================
+   NOTIFICATION / TOAST
+   ============================================================ */
+#toast-container {
+  position: fixed; top: 72px; right: 16px;
+  z-index: 3000;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--void-05);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 2px;
+  padding: 12px 16px;
+  max-width: 320px;
+  backdrop-filter: blur(20px);
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: all;
+}
+
+.toast.show { transform: translateX(0); opacity: 1; }
+
+.toast-type-bar {
+  height: 1px; width: 100%; margin-bottom: 8px;
+}
+
+.toast.success .toast-type-bar { background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
+.toast.danger .toast-type-bar { background: var(--crimson); box-shadow: 0 0 6px var(--crimson); }
+.toast.warning .toast-type-bar { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.toast.info .toast-type-bar { background: var(--violet); box-shadow: 0 0 6px var(--violet); }
+
+.toast-title {
+  font-family: var(--font-tact);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.toast.success .toast-title { color: var(--emerald); }
+.toast.danger .toast-title { color: var(--crimson); }
+.toast.warning .toast-title { color: var(--amber); }
+.toast.info .toast-title { color: var(--violet); }
+
+.toast-msg { font-family: var(--font-tact); font-size: 11px; color: var(--text-sec); line-height: 1.5; }
+
+/* ============================================================
+   CHRONOS GRID (CALENDAR)
+   ============================================================ */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-name {
+  font-family: var(--font-tact);
+  font-size: 8px; font-weight: 600;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 6px 0;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  border: 0.5px solid rgba(255,255,255,0.05);
+  border-radius: 1px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  background: rgba(255,255,255,0.01);
+}
+
+.cal-day:hover { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.04); }
+
+.cal-day.today {
+  border-color: rgba(16,185,129,0.5);
+  background: rgba(16,185,129,0.06);
+  box-shadow: 0 0 8px rgba(16,185,129,0.1);
+}
+
+.cal-day.claimed {
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.4);
+}
+
+.cal-day.claimed::after {
+  content: '';
+  position: absolute; inset: 2px;
+  background: linear-gradient(135deg, rgba(16,185,129,0.1), transparent);
+  border-radius: 1px;
+}
+
+.cal-day.yielded {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.2);
+  opacity: 0.6;
+}
+
+.cal-day.empty { opacity: 0; pointer-events: none; }
+
+.cal-day-num {
+  font-family: var(--font-tact);
+  font-size: 11px; font-weight: 600;
+  color: var(--text-sec);
+}
+
+.cal-day.today .cal-day-num { color: var(--emerald); }
+.cal-day.claimed .cal-day-num { color: var(--emerald); }
+.cal-day.yielded .cal-day-num { color: var(--crimson); }
+
+.cal-day-dots {
+  display: flex; gap: 2px; margin-top: 2px;
+}
+
+.cal-dot {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: var(--emerald); opacity: 0.7;
+}
+
+/* ============================================================
+   FOCUS SIPHON (POMODORO)
+   ============================================================ */
+#focus-view .focus-container {
+  max-width: 480px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.distill-ring {
+  width: 220px; height: 220px;
+  margin: 0 auto;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.distill-ring svg {
+  position: absolute; inset: 0;
+  transform: rotate(-90deg);
+}
+
+.distill-ring .ring-bg {
+  stroke: rgba(255,255,255,0.04);
+  fill: none;
+  stroke-width: 3;
+}
+
+.distill-ring .ring-fill {
+  stroke: var(--emerald);
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(16,185,129,0.5));
+  transition: stroke-dashoffset 1s linear;
+}
+
+.distill-ring .ring-fill.danger {
+  stroke: var(--crimson);
+  filter: drop-shadow(0 0 6px rgba(239,68,68,0.5));
+}
+
+.distill-inner {
+  position: relative; z-index: 1;
+  text-align: center;
+}
+
+.distill-time {
+  font-family: var(--font-tact);
+  font-size: 42px; font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-prime);
+  line-height: 1;
+}
+
+.distill-phase {
+  font-family: var(--font-tact);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.distill-phase.active { color: var(--emerald); }
+
+.focus-controls {
+  display: flex; justify-content: center; gap: 10px;
+}
+
+.focus-log {
+  max-height: 180px; overflow-y: auto;
+}
+
+.focus-log-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid rgba(255,255,255,0.04);
+  font-family: var(--font-tact);
+  font-size: 11px;
+}
+
+.focus-log-item .flog-time { color: var(--text-muted); flex-shrink: 0; }
+.focus-log-item .flog-msg { color: var(--text-sec); }
+.focus-log-item.event-danger .flog-msg { color: var(--crimson); }
+.focus-log-item.event-success .flog-msg { color: var(--emerald); }
+.focus-log-item.event-warn .flog-msg { color: var(--amber); }
+
+/* ============================================================
+   ARENA (PVP)
+   ============================================================ */
+.arena-field {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px;
+  align-items: start; margin-bottom: 16px;
+}
+
+.combatant {
+  padding: 16px;
+  border: 0.5px solid rgba(255,255,255,0.06);
+  border-radius: 2px;
+  background: rgba(10,10,15,0.6);
+}
+
+.combatant-name {
+  font-family: var(--font-tact);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.combatant.player .combatant-name { color: var(--emerald); }
+.combatant.enemy .combatant-name { color: var(--crimson); }
+
+.combatant-hp-bar {
+  height: 6px; border-radius: 2px;
+  background: rgba(255,255,255,0.05);
+  overflow: hidden; margin-bottom: 6px;
+}
+
+.combatant-hp-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.player .combatant-hp-fill { background: linear-gradient(90deg, var(--emerald-dim), var(--emerald)); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+.enemy .combatant-hp-fill { background: linear-gradient(90deg, #B91C1C, var(--crimson)); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+
+.combatant-hp-val {
+  font-family: var(--font-tact); font-size: 10px; color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.combatant-power {
+  font-family: var(--font-tact); font-size: 10px; color: var(--text-sec);
+  margin-bottom: 10px;
+}
+
+.combatant-power span { color: var(--amber); font-weight: 600; }
+
+.combatant-sprites {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+
+.sprite {
+  font-family: var(--font-tact); font-size: 9px;
+  padding: 3px 7px;
+  border-radius: 1px; cursor: pointer;
+  transition: var(--transition);
+}
+
+.sprite.artifact {
+  background: rgba(99,102,241,0.1);
+  border: 0.5px solid rgba(99,102,241,0.3);
+  color: var(--violet);
+}
+
+.sprite.potion {
+  background: rgba(245,158,11,0.1);
+  border: 0.5px solid rgba(245,158,11,0.3);
+  color: var(--amber);
+}
+
+.sprite:hover { transform: translateY(-1px); }
+
+.vs-divider {
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 0; margin-top: 40px;
+}
+
+.vs-text {
+  font-family: var(--font-tact); font-size: 18px; font-weight: 900;
+  color: var(--text-muted); letter-spacing: 0.1em;
+}
+
+.tactical-log {
+  max-height: 240px; overflow-y: auto;
+  background: rgba(5,5,8,0.8);
+  border: 0.5px solid rgba(255,255,255,0.05);
+  border-radius: 1px;
+  padding: 12px;
+  font-family: var(--font-tact); font-size: 11px;
+}
+
+.tlog-line { margin-bottom: 4px; line-height: 1.5; }
+.tlog-line .tl-time { color: var(--text-muted); margin-right: 8px; }
+.tlog-line .tl-player { color: var(--emerald); }
+.tlog-line .tl-enemy { color: var(--crimson); }
+.tlog-line .tl-dmg { color: var(--amber); }
+.tlog-line .tl-system { color: var(--violet); font-style: italic; }
+
+/* ============================================================
+   GUILD / LEVIATHAN
+   ============================================================ */
+.leviathan-bar-wrap {
+  margin-bottom: 16px;
+}
+
+.leviathan-bar-track {
+  height: 16px;
+  background: rgba(239,68,68,0.05);
+  border: 0.5px solid rgba(239,68,68,0.2);
+  border-radius: 1px;
+  overflow: hidden;
+  position: relative;
+}
+
+.leviathan-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(239,68,68,0.5), var(--crimson));
+  box-shadow: 0 0 12px rgba(239,68,68,0.3);
+  transition: width 0.8s ease;
+  position: relative;
+}
+
+.leviathan-bar-fill::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  animation: lev-shimmer 2s infinite;
+}
+
+@keyframes lev-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.leviathan-label {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+
+.leviathan-label .lev-name {
+  font-family: var(--font-tact);
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--crimson);
+}
+
+.leviathan-label .lev-hp {
+  font-family: var(--font-tact); font-size: 11px; color: var(--text-muted);
+}
+
+.guild-member {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border: 0.5px solid rgba(255,255,255,0.05);
+  border-radius: 1px;
+  margin-bottom: 5px;
+  background: rgba(255,255,255,0.01);
+}
+
+.member-avatar {
+  width: 28px; height: 28px;
+  border-radius: 1px;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-tact); font-size: 11px; font-weight: 700;
+  background: rgba(99,102,241,0.1); color: var(--violet);
+}
+
+.member-info { flex: 1; }
+.member-name { font-family: var(--font-intel); font-size: 12px; font-weight: 500; color: var(--text-prime); }
+.member-contribution { font-family: var(--font-tact); font-size: 10px; color: var(--text-muted); }
+
+.member-energy-bar {
+  width: 80px; height: 3px;
+  background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;
+}
+
+.member-energy-fill {
+  height: 100%; border-radius: 2px;
+  background: var(--emerald);
+  transition: width 0.5s ease;
+}
+
+/* ============================================================
+   ARMORY
+   ============================================================ */
+.artifact-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px;
+}
+
+.artifact-card {
+  padding: 14px;
+  border: 0.5px solid rgba(255,255,255,0.07);
+  border-radius: 2px;
+  background: rgba(10,10,15,0.5);
+  transition: var(--transition);
+  position: relative; overflow: hidden;
+}
+
+.artifact-card:hover {
+  border-color: rgba(99,102,241,0.3);
+  background: rgba(99,102,241,0.04);
+  transform: translateY(-1px);
+}
+
+.artifact-tier-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+}
+
+.tier-common .artifact-tier-bar { background: #94A3B8; }
+.tier-rare .artifact-tier-bar { background: #3B82F6; }
+.tier-epic .artifact-tier-bar { background: #A855F7; box-shadow: 0 0 6px rgba(168,85,247,0.4); }
+.tier-relic .artifact-tier-bar { background: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+.tier-legendary .artifact-tier-bar { background: linear-gradient(90deg, var(--crimson), var(--amber), var(--emerald)); box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+
+.artifact-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.artifact-name {
+  font-family: var(--font-intel);
+  font-size: 12px; font-weight: 600;
+  color: var(--text-prime);
+  flex: 1; margin-right: 8px;
+}
+
+.artifact-tier-badge {
+  font-family: var(--font-tact);
+  font-size: 8px; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 1px; flex-shrink: 0;
+}
+
+.tier-common .artifact-tier-badge { background: rgba(148,163,184,0.1); border: 0.5px solid rgba(148,163,184,0.3); color: #94A3B8; }
+.tier-rare .artifact-tier-badge { background: rgba(59,130,246,0.1); border: 0.5px solid rgba(59,130,246,0.3); color: #3B82F6; }
+.tier-epic .artifact-tier-badge { background: rgba(168,85,247,0.1); border: 0.5px solid rgba(168,85,247,0.3); color: #A855F7; }
+.tier-relic .artifact-tier-badge { background: rgba(245,158,11,0.1); border: 0.5px solid rgba(245,158,11,0.4); color: var(--amber); }
+.tier-legendary .artifact-tier-badge { background: rgba(245,158,11,0.15); border: 0.5px solid rgba(245,158,11,0.5); color: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.2); }
+
+.artifact-desc {
+  font-family: var(--font-tact);
+  font-size: 10px; color: var(--text-muted);
+  line-height: 1.5; margin-bottom: 10px;
+}
+
+.artifact-effect {
+  font-family: var(--font-tact);
+  font-size: 10px; color: var(--violet);
+  line-height: 1.4; margin-bottom: 10px;
+  padding: 6px 8px;
+  background: rgba(99,102,241,0.06);
+  border: 0.5px solid rgba(99,102,241,0.15);
+  border-radius: 1px;
+}
+
+.artifact-cost {
+  font-family: var(--font-tact);
+  font-size: 11px; color: var(--emerald);
+  font-weight: 600;
+}
+
+.artifact-card.owned { opacity: 0.6; pointer-events: none; }
+.artifact-card.owned::after {
+  content: 'ПОЛУЧЕНО';
+  position: absolute; inset: 0;
+  background: rgba(16,185,129,0.05);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-tact); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; color: var(--emerald);
+  pointer-events: none;
+}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+.profile-hero {
+  display: flex; align-items: center; gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.04));
+  border: 0.5px solid rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+
+.profile-avatar {
+  width: 64px; height: 64px; flex-shrink: 0;
+  border: 0.5px solid rgba(16,185,129,0.4);
+  border-radius: 2px;
+  background: rgba(16,185,129,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-tact); font-size: 24px; font-weight: 800;
+  color: var(--emerald);
+  box-shadow: 0 0 16px rgba(16,185,129,0.15);
+}
+
+.profile-name { font-family: var(--font-intel); font-size: 20px; font-weight: 700; color: var(--text-prime); margin-bottom: 4px; }
+.profile-class { font-family: var(--font-tact); font-size: 10px; color: var(--violet); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; }
+
+.profile-level {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+
+.level-num {
+  font-family: var(--font-tact); font-size: 32px; font-weight: 900;
+  color: var(--amber);
+  line-height: 1;
+}
+
+.level-label { font-family: var(--font-tact); font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.15em; }
+
+.profile-xp-track {
+  height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; width: 200px;
+}
+
+.profile-xp-fill {
+  height: 100%; background: linear-gradient(90deg, var(--violet-dim), var(--violet));
+  box-shadow: 0 0 8px rgba(99,102,241,0.5); border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ============================================================
+   SECTION HEADER
+   ============================================================ */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-family: var(--font-tact);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-sec);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.section-title::before {
+  content: '';
+  display: inline-block; width: 12px; height: 1px;
+  background: var(--emerald);
+  box-shadow: 0 0 4px var(--emerald);
+}
+
+/* ============================================================
+   ALERT STRIPS
+   ============================================================ */
+.alert-strip {
+  padding: 10px 14px;
+  border-radius: 1px;
+  font-family: var(--font-tact);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+
+.alert-strip.warning {
+  background: rgba(245,158,11,0.06);
+  border: 0.5px solid rgba(245,158,11,0.25);
+  color: var(--amber);
+}
+
+.alert-strip.danger {
+  background: rgba(239,68,68,0.06);
+  border: 0.5px solid rgba(239,68,68,0.25);
+  color: var(--crimson);
+}
+
+.alert-strip.success {
+  background: rgba(16,185,129,0.06);
+  border: 0.5px solid rgba(16,185,129,0.25);
+  color: var(--emerald);
+}
+
+/* ============================================================
+   PROGRESS RING (TINY)
+   ============================================================ */
+.tiny-ring {
+  width: 36px; height: 36px;
+  position: relative; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.tiny-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+
+/* ============================================================
+   SEPARATOR LINE
+   ============================================================ */
+.sep {
+  height: 0.5px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  margin: 14px 0;
+}
+
+/* ============================================================
+   BURNOUT WARNING ANIMATION
+   ============================================================ */
+@keyframes burnout-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50% { box-shadow: 0 0 20px 4px rgba(239,68,68,0.3); }
+}
+
+body.burnout-warning #cmd-header {
+  animation: burnout-pulse 2s infinite;
+}
+
+/* ============================================================
+   EXPLOSION OVERLAY
+   ============================================================ */
+#explosion-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at center, rgba(239,68,68,0.4) 0%, transparent 70%);
+  transition: opacity 0.1s;
+}
+
+#explosion-overlay.active { opacity: 1; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .arena-field { grid-template-columns: 1fr 1fr; }
+  .vs-divider { display: none; }
+  .header-stats { gap: 12px; }
+  .hp-bar-track { width: 50px; }
+  .hstat:nth-child(n+4) { display: none; }
+  .view { padding: 12px; }
+  .profile-hero { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 400px) {
+  .dock-label { display: none; }
+  .dock-btn { min-width: 44px; }
+}
+
+/* ============================================================
+   CURSOR BLINK (TERMINAL FEEL)
+   ============================================================ */
+.cursor-blink::after {
+  content: '_';
+  animation: blink 1.2s step-end infinite;
+  color: var(--emerald);
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ============================================================
+   SCAN LINES (SUBTLE)
+   ============================================================ */
+#scanlines {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.05) 3px,
+    rgba(0,0,0,0.05) 4px
+  );
+}
+
+/* ============================================================
+   COMBAT ANIMATION
+   ============================================================ */
+@keyframes projectile-flash {
+  0% { opacity: 0; transform: scaleX(0); }
+  30% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2); }
+}
+
+.combat-flash {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px; height: 3px;
+  animation: projectile-flash 0.4s ease-out forwards;
+  pointer-events: none; z-index: 5000;
+}
+
+/* ============================================================
+   LEVEL UP OVERLAY
+   ============================================================ */
+@keyframes levelup-in {
+  0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+  60% { opacity: 1; transform: scale(1.05) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.levelup-msg {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8000;
+  text-align: center;
+  animation: levelup-in 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
+  pointer-events: none;
+}
+
+.levelup-text {
+  font-family: var(--font-tact);
+  font-size: 48px; font-weight: 900;
+  color: var(--amber);
+  text-shadow: 0 0 30px rgba(245,158,11,0.7), 0 0 60px rgba(245,158,11,0.4);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.levelup-sub {
+  font-family: var(--font-tact);
+  font-size: 14px; font-weight: 600;
+  color: var(--text-sec); letter-spacing: 0.2em;
+  margin-top: 8px;
+}
+</style>
 </head>
 <body>
 
-<div class="glow-orb orb-1"></div><div class="glow-orb orb-2"></div>
+<div id="bg-grid"></div>
+<div id="bg-radial"></div>
+<div id="scanlines"></div>
+<div id="explosion-overlay"></div>
 <div id="toast-container"></div>
 
-<div class="modal-overlay" id="verifyModal">
-  <div class="modal-box">
-    <h3 style="margin-bottom:15px">Подтверждение ✉️</h3>
-    <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Введи 6-значный код из почты.</p>
-    <input type="text" id="verifyCode" placeholder="123456" style="width:100%; padding:15px; border-radius:12px; text-align:center; font-size:20px; font-weight:800; letter-spacing:5px; margin-bottom:20px; background:rgba(0,0,0,0.5); border:1px solid var(--primary); color:white; outline:none;">
-    <button class="btn" id="btnVerifySubmit">Активировать аккаунт</button>
+<div id="app">
+
+  <!-- ============================================================
+       COMMAND HEADER
+       ============================================================ -->
+  <header id="cmd-header">
+    <div class="header-brand">
+      <div class="brand-sigil"></div>
+      <div>
+        <div class="brand-text">AETHER PROTOCOL</div>
+        <span class="brand-sub">Алхимический Терминал v4.6</span>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat hp-bar-wrap">
+        <span class="hstat-label">ЖИЗНЬ</span>
+        <div class="hp-bar-track">
+          <div class="hp-bar-fill" id="hdr-hp-bar" style="width:100%"></div>
+        </div>
+        <span class="hstat-val crimson" id="hdr-hp">100</span>
+      </div>
+      <div class="hstat">
+        <span class="hstat-label">ИЗУМРУДЫ</span>
+        <span class="hstat-val emerald" id="hdr-emeralds">0</span>
+      </div>
+      <div class="hstat">
+        <span class="hstat-label">ЭФИР (XP)</span>
+        <span class="hstat-val violet" id="hdr-xp">0</span>
+      </div>
+      <div class="hstat">
+        <span class="hstat-label">УРОВЕНЬ</span>
+        <span class="hstat-val" id="hdr-level" style="color:var(--amber)">1</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       VIEW: КОМАНДНЫЙ ЦЕНТР (DASHBOARD)
+       ============================================================ -->
+  <section id="dashboard-view" class="view active">
+    <div class="grid-3" style="margin-bottom:12px">
+      <div class="stat-card">
+        <div class="stat-label">Активные Миссии</div>
+        <div class="stat-value" id="stat-active-missions" style="color:var(--emerald)">0</div>
+        <div class="stat-sub">В очереди извлечения</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Завершено Сегодня</div>
+        <div class="stat-value" id="stat-done-today" style="color:var(--violet)">0</div>
+        <div class="stat-sub">Секторов захвачено</div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-track">
+            <div class="xp-bar-fill" id="daily-progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Уровень Дистилляции</div>
+        <div class="stat-value" id="stat-streak" style="color:var(--amber)">0</div>
+        <div class="stat-sub">Сессий подряд без потерь</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="gap:12px">
+      <!-- Mission Matrix -->
+      <div>
+        <div class="section-header">
+          <span class="section-title">Матрица Миссий</span>
+          <button class="btn btn-emerald btn-sm" onclick="openModal('mission-modal')">+ Добавить</button>
+        </div>
+        <div id="mission-list">
+          <!-- Missions render here -->
+        </div>
+        <div id="mission-empty" style="display:none; padding:20px; text-align:center; color:var(--text-muted); font-family:var(--font-tact); font-size:11px; letter-spacing:0.1em;">
+          МАТРИЦА ПУСТА — ВВЕДИТЕ ПЕРВУЮ ДИРЕКТИВУ
+        </div>
+      </div>
+
+      <!-- Chronos Grid -->
+      <div>
+        <div class="section-header">
+          <span class="section-title">Хронос Сетка</span>
+          <span id="chronos-month" style="font-family:var(--font-tact);font-size:10px;color:var(--text-muted)"></span>
+        </div>
+        <div class="panel" style="padding:14px">
+          <div class="calendar-grid" id="calendar-grid">
+            <!-- Calendar renders here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIEW: ФОКУС-СИФОН
+       ============================================================ -->
+  <section id="focus-view" class="view">
+    <div class="focus-container">
+      <div class="section-header">
+        <span class="section-title">Фокус-Сифон — Алхимическая Дистилляция</span>
+      </div>
+
+      <div class="panel" style="padding:20px; text-align:center">
+        <div class="distill-ring" id="distill-ring">
+          <svg viewBox="0 0 220 220">
+            <circle class="ring-bg" cx="110" cy="110" r="100"/>
+            <circle class="ring-fill" id="ring-fill-el" cx="110" cy="110" r="100"
+              stroke-dasharray="628.3" stroke-dashoffset="0"/>
+          </svg>
+          <div class="distill-inner">
+            <div class="distill-time" id="distill-time">25:00</div>
+            <div class="distill-phase" id="distill-phase">ОЖИДАНИЕ</div>
+          </div>
+        </div>
+
+        <div class="focus-controls" style="margin-top:16px">
+          <button class="btn btn-emerald" id="focus-start-btn" onclick="focusControl('start')">НАЧАТЬ ДИСТИЛЛЯЦИЮ</button>
+          <button class="btn btn-ghost" id="focus-pause-btn" onclick="focusControl('pause')" style="display:none">ПАУЗА</button>
+          <button class="btn btn-crimson btn-sm" id="focus-abort-btn" onclick="focusControl('abort')" style="display:none">ПРЕРВАТЬ</button>
+        </div>
+
+        <div class="sep"></div>
+
+        <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap">
+          <div>
+            <div class="hstat-label">ЦИКЛ</div>
+            <div style="font-family:var(--font-tact);font-size:18px;font-weight:700;color:var(--violet)" id="focus-cycle">1</div>
+          </div>
+          <div>
+            <div class="hstat-label">СЕССИЙ</div>
+            <div style="font-family:var(--font-tact);font-size:18px;font-weight:700;color:var(--emerald)" id="focus-sessions">0</div>
+          </div>
+          <div>
+            <div class="hstat-label">XP ДОБЫТО</div>
+            <div style="font-family:var(--font-tact);font-size:18px;font-weight:700;color:var(--amber)" id="focus-xp-gained">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-top:14px">
+        <span class="section-title">Журнал Дистилляции</span>
+      </div>
+      <div class="panel">
+        <div class="panel-body focus-log" id="focus-log">
+          <div class="focus-log-item">
+            <span class="flog-time">--:--</span>
+            <span class="flog-msg">Терминал готов к дистилляции. Ожидание команды...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="padding:14px; margin-top:0">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center">
+          <span style="font-family:var(--font-tact);font-size:9px;color:var(--text-muted);letter-spacing:0.1em">ПАРАМЕТРЫ ДИСТИЛЛЯЦИИ:</span>
+          <div class="field" style="margin:0; flex-direction:row; align-items:center; gap:6px">
+            <label style="margin:0; white-space:nowrap">ФОКУС (МИН)</label>
+            <input type="number" id="focus-duration-input" value="25" min="1" max="90" style="width:60px">
+          </div>
+          <div class="field" style="margin:0; flex-direction:row; align-items:center; gap:6px">
+            <label style="margin:0; white-space:nowrap">ОТДЫХ (МИН)</label>
+            <input type="number" id="break-duration-input" value="5" min="1" max="30" style="width:60px">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIEW: АРЕНА
+       ============================================================ -->
+  <section id="arena-view" class="view">
+    <div class="section-header">
+      <span class="section-title">Арена Алхимиков — Тактический Дуэль</span>
+      <button class="btn btn-violet btn-sm" onclick="initCombat()">ИНИЦИАЛИЗИРОВАТЬ БОЙ</button>
+    </div>
+
+    <div id="arena-setup" class="panel" style="padding:16px; margin-bottom:12px; display:none">
+      <div class="grid-2" style="gap:12px">
+        <div>
+          <div class="field">
+            <label>ИМЯ ОППОНЕНТА</label>
+            <input type="text" id="opponent-name-input" value="АЛХИМИК ВАРАШ" placeholder="Введите имя противника">
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label>УРОВЕНЬ УГРОЗЫ</label>
+            <select id="opponent-tier-input">
+              <option value="1">РЕКРУТ (x0.8)</option>
+              <option value="2" selected>ВЕТЕРАН (x1.0)</option>
+              <option value="3">ЭЛИТА (x1.3)</option>
+              <option value="4">КОМАНДОР (x1.7)</option>
+              <option value="5">ЛЕГЕНДА (x2.5)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-crimson" onclick="startDuel()">НАЧАТЬ ДУЭЛЬ</button>
+    </div>
+
+    <div id="arena-field-wrap">
+      <div class="arena-field" id="arena-field">
+        <!-- Combatants render here -->
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:center; margin-bottom:12px; flex-wrap:wrap" id="arena-action-btns">
+        <!-- Action buttons -->
+      </div>
+
+      <div class="section-header">
+        <span class="section-title">Тактический Журнал</span>
+      </div>
+      <div class="tactical-log" id="tactical-log">
+        <div class="tlog-line"><span class="tl-system">Арена пуста. Ожидание участников...</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIEW: ГИЛЬДИЯ
+       ============================================================ -->
+  <section id="guild-view" class="view">
+    <div class="section-header">
+      <span class="section-title">Военный Совет Гильдии</span>
+    </div>
+
+    <div id="leviathan-section" class="panel" style="padding:18px; margin-bottom:16px; border-color:rgba(239,68,68,0.15)">
+      <div class="leviathan-label">
+        <span class="lev-name">ЛЕВИАФАН — МИРОВОЙ БОСС</span>
+        <span class="lev-hp" id="lev-hp-label">3500 / 5000</span>
+      </div>
+      <div class="leviathan-bar-track">
+        <div class="leviathan-bar-fill" id="lev-hp-bar" style="width:70%"></div>
+      </div>
+      <div style="display:flex; gap:20px; margin-top:12px; flex-wrap:wrap">
+        <div>
+          <div class="hstat-label">УРОН ЗА ПРОВАЛ</div>
+          <div style="font-family:var(--font-tact);font-size:16px;font-weight:700;color:var(--crimson)">-15 HP</div>
+        </div>
+        <div>
+          <div class="hstat-label">ДНЕВНАЯ КВОТА</div>
+          <div style="font-family:var(--font-tact);font-size:16px;font-weight:700;color:var(--amber)" id="guild-quota-display">0 / 5</div>
+        </div>
+        <div>
+          <div class="hstat-label">СТАТУС ОСАДЫ</div>
+          <div style="font-family:var(--font-tact);font-size:14px;font-weight:700;color:var(--text-sec)" id="guild-siege-status">ПАССИВНЫЙ</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <button class="btn btn-emerald btn-sm" onclick="contributeEnergy()">ВНЕСТИ ЭНЕРГИЮ (+1 ЗАРЯД)</button>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Состав Гильдии</span>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('guild-member-modal')">+ РЕКРУТ</button>
+    </div>
+    <div id="guild-members-list">
+      <!-- Members render here -->
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIEW: АРСЕНАЛ
+       ============================================================ -->
+  <section id="armory-view" class="view">
+    <div class="section-header">
+      <span class="section-title">Арсенал — Алхимическая Лаборатория</span>
+      <span style="font-family:var(--font-tact);font-size:11px;color:var(--emerald)">
+        ИЗУМРУДЫ: <span id="armory-emerald-count" style="font-weight:700">0</span>
+      </span>
+    </div>
+
+    <div class="alert-strip warning" id="armory-alert" style="display:none">
+      Недостаточно изумрудов для трансмутации. Завершите миссии для добычи ресурсов.
+    </div>
+
+    <div class="section-header" style="margin-top:8px">
+      <span class="section-title" style="color:var(--text-muted)">Каталог Артефактов</span>
+    </div>
+    <div class="artifact-grid" id="artifact-grid">
+      <!-- Artifacts render here -->
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIEW: ЛИЧНОЕ ДЕЛО
+       ============================================================ -->
+  <section id="profile-view" class="view">
+    <div class="profile-hero" id="profile-hero">
+      <div class="profile-avatar" id="profile-avatar">А</div>
+      <div>
+        <div class="profile-name" id="profile-name">АЛХИМИК</div>
+        <div class="profile-class" id="profile-class">НОВОБРАНЕЦ — КЛАСС D</div>
+        <div class="profile-level">
+          <div>
+            <div class="level-label">УРОВЕНЬ</div>
+            <div class="level-num" id="profile-level-num">1</div>
+          </div>
+          <div style="margin-left:8px">
+            <div class="level-label" style="margin-bottom:4px">ПРОГРЕСС К СЛ. УРОВНЮ</div>
+            <div class="profile-xp-track">
+              <div class="profile-xp-fill" id="profile-xp-fill" style="width:0%"></div>
+            </div>
+            <div style="font-family:var(--font-tact);font-size:9px;color:var(--text-muted);margin-top:3px" id="profile-xp-label">0 / 100 XP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px; gap:12px">
+      <div class="stat-card">
+        <div class="stat-label">Всего Миссий Выполнено</div>
+        <div class="stat-value emerald" id="prof-total-missions" style="color:var(--emerald)">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Провалено Дистилляций</div>
+        <div class="stat-value" id="prof-failed-focus" style="color:var(--crimson)">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Дней Захвачено</div>
+        <div class="stat-value" id="prof-claimed-days" style="color:var(--violet)">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Артефактов Получено</div>
+        <div class="stat-value" id="prof-artifacts" style="color:var(--amber)">0</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Идентификационные Данные</span>
+    </div>
+    <div class="panel">
+      <div class="panel-body">
+        <div class="field">
+          <label>ПОЗЫВНОЙ ОПЕРАТИВНИКА</label>
+          <input type="text" id="profile-name-input" placeholder="Введите позывной...">
+        </div>
+        <button class="btn btn-emerald btn-sm" onclick="saveProfile()">СОХРАНИТЬ ДАННЫЕ</button>
+        <div class="sep"></div>
+        <button class="btn btn-crimson btn-sm" onclick="confirmReset()">СБРОС ПРОТОКОЛА</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /#app -->
+
+<!-- ============================================================
+     COMMAND DOCK
+     ============================================================ -->
+<nav id="cmd-dock">
+  <button class="dock-btn active" data-view="dashboard" onclick="switchView('dashboard')">
+    <div class="dock-icon">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    </div>
+    <span class="dock-label">Матрица</span>
+  </button>
+  <button class="dock-btn" data-view="focus" onclick="switchView('focus')">
+    <div class="dock-icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <span class="dock-label">Сифон</span>
+  </button>
+  <button class="dock-btn" data-view="arena" onclick="switchView('arena')">
+    <div class="dock-icon">
+      <svg viewBox="0 0 24 24"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l3-3"/><path d="M16 22l6-6"/><path d="M8 8l-5 5 3 3 5-5"/></svg>
+    </div>
+    <span class="dock-label">Арена</span>
+  </button>
+  <button class="dock-btn" data-view="guild" onclick="switchView('guild')">
+    <div class="dock-icon">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <span class="dock-label">Гильдия</span>
+  </button>
+  <button class="dock-btn" data-view="armory" onclick="switchView('armory')">
+    <div class="dock-icon">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </div>
+    <span class="dock-label">Арсенал</span>
+  </button>
+  <button class="dock-btn" data-view="profile" onclick="switchView('profile')">
+    <div class="dock-icon">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <span class="dock-label">Досье</span>
+  </button>
+</nav>
+
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+
+<!-- Add Mission Modal -->
+<div class="modal-overlay" id="mission-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Новая Директива Миссии</span>
+      <button class="modal-close" onclick="closeModal('mission-modal')">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>КОДОВОЕ НАЗВАНИЕ ОПЕРАЦИИ</label>
+        <input type="text" id="m-title" placeholder="Введите наименование миссии...">
+      </div>
+      <div class="field">
+        <label>ОПЕРАТИВНЫЙ БРИФИНГ</label>
+        <textarea id="m-desc" placeholder="Детали операции..."></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>РАНГ СЛОЖНОСТИ</label>
+          <select id="m-rank">
+            <option value="D">D — РУТИННЫЙ (5 XP)</option>
+            <option value="C" selected>C — СТАНДАРТ (15 XP)</option>
+            <option value="B">B — СЛОЖНЫЙ (30 XP)</option>
+            <option value="A">A — КРИТИЧЕСКИЙ (60 XP)</option>
+            <option value="S">S — АПОКАЛИПС (150 XP)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ДЕДЛАЙН</label>
+          <input type="date" id="m-deadline">
+        </div>
+      </div>
+      <div class="field">
+        <label>КАТЕГОРИЯ</label>
+        <select id="m-category">
+          <option value="intel">РАЗВЕДКА (Исследование)</option>
+          <option value="combat">БОЙ (Разработка)</option>
+          <option value="supply">СНАБЖЕНИЕ (Административное)</option>
+          <option value="recon">РЕКОГНОСЦИРОВКА (Обучение)</option>
+          <option value="special">СПЕЦОПЕРАЦИЯ (Прочее)</option>
+        </select>
+      </div>
+      <button class="btn btn-emerald" style="width:100%" onclick="addMission()">ЗАРЕГИСТРИРОВАТЬ МИССИЮ</button>
+    </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="forgotModal">
-  <div class="modal-box">
-    <h3 style="margin-bottom:15px">Восстановление 🗝️</h3>
-    <div id="forgotStep1">
-      <input type="email" id="forgotEmail" placeholder="Твой Email" style="width:100%; padding:15px; border-radius:12px; margin-bottom:20px; background:rgba(0,0,0,0.5); border:1px solid var(--card-border); color:white;">
-      <button class="btn" id="btnForgotSend">Получить код</button>
-      <button class="btn" id="btnForgotCancel" style="margin-top:10px; background:transparent; border:1px solid var(--card-border);">Отмена</button>
+<!-- Guild Member Modal -->
+<div class="modal-overlay" id="guild-member-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Принять Рекрута в Гильдию</span>
+      <button class="modal-close" onclick="closeModal('guild-member-modal')">x</button>
     </div>
-    <div id="forgotStep2" style="display:none;">
-      <input type="text" id="resetCode" placeholder="Код (6 цифр)" style="width:100%; padding:12px; border-radius:12px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--card-border); color:white; text-align:center; letter-spacing:2px;">
-      <input type="password" id="resetPass" placeholder="Новый пароль" style="width:100%; padding:12px; border-radius:12px; margin-bottom:20px; background:rgba(0,0,0,0.5); border:1px solid var(--card-border); color:white;">
-      <button class="btn" id="btnResetSubmit">Сохранить пароль</button>
-    </div>
-  </div>
-</div>
-
-<div class="auth-wrapper" id="authWrapper">
-  <div class="auth-container">
-    <div class="auth-tabs"><div class="auth-tab active" id="tabLogin">Вход</div><div class="auth-tab" id="tabRegister">Регистрация</div></div>
-    <div class="form-slider" id="formSlider">
-      <div class="form-box">
-        <div class="logo-text logo-text-big">P2S.RPG</div>
-        <div class="subtitle">С возвращением в систему</div>
-        <form id="loginForm">
-          <div class="input-group"><label>Логин</label><input type="text" id="loginName" required></div>
-          <div class="input-group"><label>Пароль</label><input type="password" id="loginPass" required></div>
-          <div id="loginError" style="color:#ff5e5e; font-size:12px; text-align:center; margin-bottom:10px; min-height:15px;"></div>
-          <button type="submit" class="btn">Подключиться</button>
-        </form>
-        <p style="text-align:center; margin-top:15px; font-size:12px; color:var(--accent); cursor:pointer;" onclick="document.getElementById('forgotModal').classList.add('active')">Забыл пароль?</p>
+    <div class="modal-body">
+      <div class="field">
+        <label>ПОЗЫВНОЙ БОЙЦА</label>
+        <input type="text" id="gm-name" placeholder="Имя участника...">
       </div>
-      <div class="form-box">
-        <div class="logo-text logo-text-big">Новый Герой</div>
-        <div class="subtitle">Создай профиль</div>
-        <form id="registerForm">
-          <div class="input-group" style="margin-bottom:10px;"><label>Email</label><input type="email" id="regEmail" required></div>
-          <div class="input-group" style="margin-bottom:10px;"><label>Логин</label><input type="text" id="regName" required></div>
-          <div class="input-group" style="margin-bottom:10px;"><label>Пароль</label><input type="password" id="regPass" required></div>
-          <div class="input-group" style="margin-bottom:10px;"><label>Повтор</label><input type="password" id="regPassConfirm" required></div>
-          <div id="regError" style="color:#ff5e5e; font-size:12px; text-align:center; margin-bottom:10px; min-height:15px;"></div>
-          <button type="submit" class="btn">Начать Путь</button>
-        </form>
+      <div class="field">
+        <label>КЛАСС АЛХИМИКА</label>
+        <select id="gm-class">
+          <option value="transmuter">ТРАНСМУТАТОР</option>
+          <option value="distiller">ДИСТИЛЛЯТОР</option>
+          <option value="crystallizer">КРИСТАЛЛИЗАТОР</option>
+          <option value="voidseer">ПРОВИДЕЦ ПУСТОТЫ</option>
+        </select>
       </div>
+      <button class="btn btn-emerald" style="width:100%" onclick="addGuildMember()">ЗАЧИСЛИТЬ В ГИЛЬДИЮ</button>
     </div>
   </div>
 </div>
 
-<div class="app-layout" id="appLayout">
-  <div class="sidebar">
-    <div class="logo-text" style="font-size: 28px; font-weight: 800; padding: 10px 15px; margin-bottom:20px;">P2S.RPG</div>
-    <div class="nav-item active" data-target="dashboard">⚔️ Квесты</div>
-    <div class="nav-item" data-target="shop">🛒 Магазин</div>
-    <div class="nav-item" data-target="timer">⏱️ Фокус</div>
-    <div class="nav-item" data-target="leaderboard">🌍 Рейтинг</div>
-    <div class="nav-item" id="logoutBtn" style="margin-top:auto; color:#ff5e5e; border:1px solid rgba(255,94,94,0.2);">🚪 Покинуть игру</div>
-  </div>
-
-  <div class="main-content">
-    
-    <div class="profile-card">
-      <div style="display:flex; align-items:center; gap:25px; z-index:1;">
-        <div class="avatar" id="userAvatar">?</div>
-        <div>
-          <h2 id="userNameDisplay" style="font-size:24px; font-weight:800; letter-spacing:0.5px;">Игрок</h2>
-          <div class="rank-badge" id="userRankBadge">Бронзовая Лига</div>
-        </div>
+<!-- Confirm Reset Modal -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" style="color:var(--crimson)">ПРОТОКОЛ СБРОСА — ВНИМАНИЕ</span>
+      <button class="modal-close" onclick="closeModal('reset-modal')">x</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-strip danger">
+        ВНИМАНИЕ: Все данные будут уничтожены. Операция необратима. Прогресс, миссии, артефакты и гильдия — всё будет стерто из памяти терминала.
       </div>
-      
-      <div class="xp-bar-container">
-        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--text-muted);">
-          <span>LVL <span id="userLevelText" style="color:white; font-weight:800; font-size:16px;">1</span></span>
-          <span><span id="xpCurrent" style="color:white;">0</span> / <span id="xpRequired">100</span> XP</span>
-        </div>
-        <div class="xp-bar"><div class="xp-fill" id="xpFillBar"></div></div>
-      </div>
-
-      <div class="gem-container" style="z-index:1;">
-        <span style="font-size:24px;">💎</span>
-        <span class="gem-text" id="userGems" style="font-size:22px;">0</span>
+      <div style="display:flex; gap:10px; margin-top:12px">
+        <button class="btn btn-crimson" style="flex:1" onclick="executeReset()">ПОДТВЕРДИТЬ СБРОС</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('reset-modal')">ОТМЕНА</button>
       </div>
     </div>
-
-    <div class="section active" id="sec-dashboard">
-      <div class="stats-grid">
-        <div class="stat-box"><span class="stat-value" id="statStreak">0</span><div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Стрик 🔥</div></div>
-        <div class="stat-box"><span class="stat-value" id="statCompleted">0</span><div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Выполнено ✅</div></div>
-        <div class="stat-box"><span class="stat-value" id="statTotalPoints">0</span><div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Всего Опыта 🌟</div></div>
-      </div>
-
-      <div class="split-dashboard">
-        <div>
-          <h3 style="margin-bottom:20px; color:var(--secondary); display:flex; align-items:center; gap:10px;">⚡ Дейлики (Ежедневные)</h3>
-          <div class="tasks-list" id="dailyTasksGrid"></div>
-        </div>
-        <div>
-          <h3 style="margin-bottom:20px; color:var(--accent); display:flex; align-items:center; gap:10px;">🗺️ Сюжетные Миссии</h3>
-          <div class="tasks-list" id="mainTasksGrid"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section" id="sec-shop">
-      <h2 style="margin-bottom:10px;">Секретная Лавка</h2>
-      <p style="color:var(--text-muted); margin-bottom:30px;">Трать добытые кристаллы на мощные артефакты.</p>
-      
-      <div class="shop-grid">
-        <div class="shop-item">
-          <div class="shop-icon">🧪</div>
-          <h3 style="margin-bottom:10px;">Эликсир Опыта</h3>
-          <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Мгновенно дает +50 XP. Отлично подходит для быстрого повышения уровня.</p>
-          <button class="btn" style="background:var(--card-bg); border:1px solid var(--gem); color:var(--gem);" onclick="buyItem('xp_potion', 15)">Купить за 15 💎</button>
-        </div>
-        
-        <div class="shop-item">
-          <div class="shop-icon">❄️</div>
-          <h3 style="margin-bottom:10px;">Заморозка Стрика</h3>
-          <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Защищает твой стрик от сброса, если ты пропустишь один день.</p>
-          <button class="btn" style="background:var(--card-bg); border:1px solid var(--gem); color:var(--gem);" onclick="buyItem('streak_freeze', 50)">Купить за 50 💎</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="section" id="sec-leaderboard">
-      <h2 style="margin-bottom:20px;">Зал Славы</h2>
-      <div id="lbList"></div>
-    </div>
-
-    <div class="section" id="sec-timer">
-      <div style="display:flex; flex-direction:column; align-items:center; padding:50px 0;">
-        <div id="timerDisplay" style="font-size:80px; font-weight:900; background:rgba(0,0,0,0.3); width:300px; height:300px; border-radius:50%; display:flex; justify-content:center; align-items:center; border:10px solid var(--card-border); margin-bottom:40px; text-shadow:0 0 20px rgba(255,255,255,0.3);">25:00</div>
-        <div style="display:flex; gap:15px;">
-          <button class="btn" style="width:150px;" onclick="startTimer(25)">Начать Фокус</button>
-          <button class="btn" style="width:150px; background:rgba(255,255,255,0.1);" onclick="clearInterval(tInt); document.getElementById('timerDisplay').innerText='25:00';">Сброс</button>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
 <script>
-const API = "http://127.0.0.1:8000";
-let tempRegEmail = "";
+/* ============================================================
+   AETHER PROTOCOL — CORE ENGINE
+   ============================================================ */
+'use strict';
 
-// UI Tools
-function showToast(msg, type='info') {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.style.borderLeftColor = type === 'error' ? '#ff5e5e' : (type === 'success' ? 'var(--gem)' : 'var(--primary)');
-  t.innerHTML = `<span style="font-size:18px; margin-right:10px;">${type==='error'?'❌':type==='success'?'💎':'✨'}</span> ${msg}`;
-  c.appendChild(t);
-  setTimeout(()=>t.classList.add('show'), 10);
-  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 500); }, 3500);
-}
+// ============================================================
+// CONSTANTS
+// ============================================================
+const RANK_CONFIG = {
+  D: { xp: 5,   emeralds: 2,  label: 'D',  burnout: false, burnoutChance: 0 },
+  C: { xp: 15,  emeralds: 5,  label: 'C',  burnout: false, burnoutChance: 0 },
+  B: { xp: 30,  emeralds: 12, label: 'B',  burnout: false, burnoutChance: 0.1 },
+  A: { xp: 60,  emeralds: 25, label: 'A',  burnout: true,  burnoutChance: 0.2 },
+  S: { xp: 150, emeralds: 60, label: 'S',  burnout: true,  burnoutChance: 0.35 }
+};
 
-// Auth Tabs
-document.getElementById('tabLogin').onclick = () => { document.getElementById('tabLogin').classList.add('active'); document.getElementById('tabRegister').classList.remove('active'); document.getElementById('formSlider').style.transform='translateX(0)'; };
-document.getElementById('tabRegister').onclick = () => { document.getElementById('tabRegister').classList.add('active'); document.getElementById('tabLogin').classList.remove('active'); document.getElementById('formSlider').style.transform='translateX(-50%)'; };
+const XP_PER_LEVEL = (lvl) => Math.floor(100 * Math.pow(1.35, lvl - 1));
 
-// Registration
-document.getElementById('registerForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('regEmail').value, user = document.getElementById('regName').value;
-  const pass = document.getElementById('regPass').value, conf = document.getElementById('regPassConfirm').value;
-  if(pass !== conf) return document.getElementById('regError').innerText = "Пароли не совпадают!";
-  document.getElementById('regError').innerText = "Отправка свитка...";
-
-  try {
-    const res = await fetch(`${API}/auth`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:user, email:email, password:pass, register:true}) });
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.detail);
-    if(data.status === "needs_verification") {
-      tempRegEmail = email; document.getElementById('regError').innerText = ""; document.getElementById('verifyModal').classList.add('active');
+const ARTIFACT_CATALOG = [
+  {
+    id: 'shield_of_silence',
+    name: 'Щит Безмолвия',
+    tier: 'rare',
+    cost: 50,
+    desc: 'Реагирует на угрозу провала. Блокирует один удар.',
+    effect: 'При провале ОДНОЙ миссии или дистилляции: потеря HP отменяется. Одноразовое.',
+    power: 15,
+    charges: 1,
+    effectFn: (state) => { state.shieldActive = true; return state; }
+  },
+  {
+    id: 'prism_of_focus',
+    name: 'Призма Концентрации',
+    tier: 'common',
+    cost: 20,
+    desc: 'Усиливает ментальные потоки. +20% XP за следующую сессию.',
+    effect: '+20% XP от следующей завершённой дистилляции.',
+    power: 8,
+    charges: 3,
+    effectFn: (state) => { state.xpBoostCharges = (state.xpBoostCharges || 0) + 1; return state; }
+  },
+  {
+    id: 'mercury_of_speed',
+    name: 'Ртуть Ускорения',
+    tier: 'common',
+    cost: 15,
+    desc: 'Катализирует реакции. Время дистилляции -5 минут на следующий цикл.',
+    effect: 'Следующий цикл фокуса сокращается на 5 минут.',
+    power: 5,
+    charges: 2,
+    effectFn: (state) => { state.focusTimeReduction = (state.focusTimeReduction || 0) + 5; return state; }
+  },
+  {
+    id: 'obsidian_core',
+    name: 'Обсидиановый Кор',
+    tier: 'epic',
+    cost: 120,
+    desc: 'Твёрдое ядро воли. Предотвращает Нейронное Выгорание.',
+    effect: 'Нейронное Выгорание не срабатывает при провале S-ранга (3 применения).',
+    power: 30,
+    charges: 3,
+    effectFn: (state) => { state.burnoutImmunity = (state.burnoutImmunity || 0) + 3; return state; }
+  },
+  {
+    id: 'emerald_lens',
+    name: 'Изумрудная Линза',
+    tier: 'rare',
+    cost: 60,
+    desc: 'Преломляет добычу. Удваивает изумруды со следующих 5 миссий.',
+    effect: 'x2 изумруды за следующие 5 выполненных миссий.',
+    power: 20,
+    charges: 5,
+    effectFn: (state) => { state.emeraldDoubleCharges = (state.emeraldDoubleCharges || 0) + 5; return state; }
+  },
+  {
+    id: 'void_sigil',
+    name: 'Печать Пустоты',
+    tier: 'relic',
+    cost: 250,
+    desc: 'Запечатывает пространство-время. Заморозить Левиафана на 24 часа.',
+    effect: 'Левиафан не атакует 24 часа, даже при невыполненной квоте.',
+    power: 50,
+    charges: 1,
+    effectFn: (state) => { state.leviathanFrozenUntil = Date.now() + 86400000; return state; }
+  },
+  {
+    id: 'aether_conduit',
+    name: 'Проводник Эфира',
+    tier: 'epic',
+    cost: 180,
+    desc: 'Канал чистого эфира. +30 к боевой мощи в Арене.',
+    effect: '+30 к силе атаки в дуэлях Арены.',
+    power: 30,
+    charges: -1,
+    effectFn: (state) => { state.arenaPowerBonus = (state.arenaPowerBonus || 0) + 30; return state; }
+  },
+  {
+    id: 'temporal_crystal',
+    name: 'Темпоральный Кристалл',
+    tier: 'legendary',
+    cost: 500,
+    desc: 'Осколок иного времени. Восстанавливает 30% здоровья немедленно.',
+    effect: 'Немедленное восстановление 30% HP. Одноразовое.',
+    power: 80,
+    charges: 1,
+    effectFn: (state) => {
+      state.hp = Math.min(100, state.hp + 30);
+      return state;
     }
-  } catch(err) { document.getElementById('regError').innerText = err.message; }
-};
-
-// Verify
-document.getElementById('btnVerifySubmit').onclick = async () => {
-  const code = document.getElementById('verifyCode').value;
-  try {
-    const res = await fetch(`${API}/verify?email=${tempRegEmail}&code=${code}`, {method:'POST'});
-    if(res.ok) {
-      document.getElementById('verifyModal').classList.remove('active');
-      showToast("Магия сработала! Войди в систему.", "success");
-      document.getElementById('tabLogin').click();
-    } else { const data = await res.json(); throw new Error(data.detail); }
-  } catch(err) { showToast(err.message, "error"); }
-};
-
-// Login
-document.getElementById('loginForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const u = document.getElementById('loginName').value, p = document.getElementById('loginPass').value;
-  try {
-    const r = await fetch(`${API}/auth`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p, register:false}) });
-    const d = await r.json();
-    if(!r.ok) throw new Error(d.detail);
-    localStorage.setItem('token', d.access_token); localStorage.setItem('username', d.username);
-    initApp();
-  } catch(err) { document.getElementById('loginError').innerText = err.message; }
-};
-
-// Forgot PW
-document.getElementById('btnForgotCancel').onclick = () => document.getElementById('forgotModal').classList.remove('active');
-document.getElementById('btnForgotSend').onclick = async () => {
-  const email = document.getElementById('forgotEmail').value;
-  document.getElementById('btnForgotSend').innerText = "Летит сова...";
-  const r = await fetch(`${API}/forgot-password?email=${email}`, {method:'POST'});
-  if(r.ok) { document.getElementById('forgotStep1').style.display = 'none'; document.getElementById('forgotStep2').style.display = 'block'; } 
-  else { showToast("Свиток не нашел адресата", "error"); document.getElementById('btnForgotSend').innerText = "Получить код"; }
-};
-document.getElementById('btnResetSubmit').onclick = async () => {
-  const email = document.getElementById('forgotEmail').value, code = document.getElementById('resetCode').value, pass = document.getElementById('resetPass').value;
-  const r = await fetch(`${API}/reset-password?email=${email}&code=${code}&new_password=${pass}`, {method:'POST'});
-  if(r.ok) { document.getElementById('forgotModal').classList.remove('active'); showToast("Пароль обновлен!", "success"); } 
-  else { showToast("Ложный код", "error"); }
-};
-
-// --- APP LOGIC ---
-async function call(ep, opt={}) {
-  const t = localStorage.getItem('token');
-  const r = await fetch(`${API}${ep}`, {...opt, headers: {...opt.headers, 'Authorization':`Bearer ${t}`, 'Content-Type':'application/json'}});
-  if(r.status === 401) { localStorage.clear(); location.reload(); }
-  return r.json();
-}
-
-async function loadProfile() {
-  const d = await call('/stats');
-  document.getElementById('userNameDisplay').innerText = localStorage.getItem('username');
-  document.getElementById('userAvatar').innerText = localStorage.getItem('username')[0].toUpperCase();
-  document.getElementById('userRankBadge').innerText = d.rank;
-  document.getElementById('userLevelText').innerText = d.level;
-  document.getElementById('xpCurrent').innerText = d.current_level_progress;
-  document.getElementById('xpRequired').innerText = d.next_level_points;
-  document.getElementById('xpFillBar').style.width = `${(d.current_level_progress/d.next_level_points)*100}%`;
-  
-  // Анимация начисления кристаллов
-  const gemEl = document.getElementById('userGems');
-  if(parseInt(gemEl.innerText) !== d.gems) {
-    gemEl.style.transform = 'scale(1.5)';
-    setTimeout(()=> gemEl.style.transform = 'scale(1)', 300);
   }
-  gemEl.innerText = d.gems;
+];
 
-  document.getElementById('statStreak').innerText = d.streak_days;
-  document.getElementById('statCompleted').innerText = d.completed_tasks;
-  document.getElementById('statTotalPoints').innerText = d.points;
+const GUILD_DAILY_QUOTA = 5;
+
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+let GS = {
+  player: {
+    name: 'АЛХИМИК',
+    hp: 100,
+    maxHp: 100,
+    xp: 0,
+    level: 1,
+    emeralds: 0,
+    totalMissions: 0,
+    failedFocus: 0,
+    streak: 0
+  },
+  missions: [],
+  calendar: {},
+  focus: {
+    sessions: 0,
+    cycle: 1,
+    xpGained: 0,
+    failCount: 0
+  },
+  guild: {
+    members: [],
+    leviathanHp: 5000,
+    leviathanMaxHp: 5000,
+    dailyEnergy: 0,
+    lastResetDate: null
+  },
+  ownedArtifacts: [],
+  activeArtifactEffects: {},
+  shieldActive: false,
+  xpBoostCharges: 0,
+  focusTimeReduction: 0,
+  burnoutImmunity: 0,
+  emeraldDoubleCharges: 0,
+  leviathanFrozenUntil: 0,
+  arenaPowerBonus: 0,
+  arena: {
+    combatLog: [],
+    playerHp: 100,
+    enemyHp: 100,
+    playerMaxHp: 100,
+    enemyMaxHp: 100,
+    enemyName: 'АЛХИМИК ВАРАШ',
+    inProgress: false,
+    playerTurn: true
+  },
+  lastSave: null
+};
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function saveState() {
+  try {
+    GS.lastSave = Date.now();
+    localStorage.setItem('aether_protocol_v2', JSON.stringify(GS));
+  } catch(e) { console.warn('Ошибка сохранения:', e); }
 }
 
-async function loadTasks() {
-  const tasks = await call('/tasks');
-  const dGrid = document.getElementById('dailyTasksGrid'), mGrid = document.getElementById('mainTasksGrid');
-  dGrid.innerHTML = ''; mGrid.innerHTML = '';
-  
-  tasks.forEach(t => {
-    const card = `
-      <div class="task-card ${t.task_type}" style="${t.completed ? 'opacity:0.5; filter:grayscale(0.8);' : ''}">
-        <div>
-          <h4 style="margin-bottom:8px; font-size:16px;">${t.title}</h4>
-          <p style="font-size:13px; color:var(--text-muted); line-height:1.4;">${t.description}</p>
+function loadState() {
+  try {
+    const raw = localStorage.getItem('aether_protocol_v2');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      GS = deepMerge(GS, saved);
+    }
+  } catch(e) { console.warn('Ошибка загрузки:', e); }
+}
+
+function deepMerge(target, source) {
+  const result = Object.assign({}, target);
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+// ============================================================
+// TOAST NOTIFICATION SYSTEM
+// ============================================================
+function toast(title, msg, type = 'success', duration = 3500) {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <div class="toast-type-bar"></div>
+    <div class="toast-title">${title}</div>
+    <div class="toast-msg">${msg}</div>
+  `;
+  container.appendChild(el);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.add('show'));
+  });
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 400);
+  }, duration);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`${viewId}-view`).classList.add('active');
+  document.querySelector(`.dock-btn[data-view="${viewId}"]`).classList.add('active');
+
+  if (viewId === 'dashboard') { renderMissions(); renderCalendar(); }
+  if (viewId === 'armory') { renderArmory(); }
+  if (viewId === 'guild') { renderGuild(); }
+  if (viewId === 'profile') { renderProfile(); }
+  if (viewId === 'arena') { renderArena(); }
+}
+
+// ============================================================
+// MODAL SYSTEM
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modals on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('open');
+  }
+});
+
+// ============================================================
+// HP & RESOURCE MANAGEMENT
+// ============================================================
+function modifyHP(delta, reason = '') {
+  if (delta < 0 && GS.shieldActive) {
+    GS.shieldActive = false;
+    toast('ЩИТ БЕЗМОЛВИЯ', 'Артефакт поглотил входящий урон!', 'info');
+    return;
+  }
+  GS.player.hp = Math.max(0, Math.min(GS.player.maxHp, GS.player.hp + delta));
+  updateHeader();
+  saveState();
+
+  if (delta < 0) {
+    triggerExplosion();
+    if (GS.player.hp <= 20) {
+      document.body.classList.add('burnout-warning');
+      toast('КРИТИЧЕСКОЕ СОСТОЯНИЕ', `ЖИЗНЬ КРИТИЧЕСКИ НИЗКАЯ: ${GS.player.hp}%. ${reason}`, 'danger', 5000);
+    } else {
+      toast('НЕЙРОННОЕ ВЫГОРАНИЕ', `Потеряно ${Math.abs(delta)} HP. ${reason}`, 'danger');
+    }
+  } else if (delta > 0) {
+    if (GS.player.hp > 20) document.body.classList.remove('burnout-warning');
+    toast('РЕГЕНЕРАЦИЯ ПРОТОКОЛА', `Восстановлено ${delta} HP.`, 'success');
+  }
+}
+
+function modifyEmeralds(delta) {
+  GS.player.emeralds = Math.max(0, GS.player.emeralds + delta);
+  updateHeader();
+  saveState();
+}
+
+function addXP(amount) {
+  const boosted = GS.xpBoostCharges > 0 ? Math.floor(amount * 1.2) : amount;
+  if (GS.xpBoostCharges > 0) GS.xpBoostCharges--;
+
+  GS.player.xp += boosted;
+  GS.focus.xpGained += boosted;
+  document.getElementById('focus-xp-gained').textContent = GS.focus.xpGained;
+
+  checkLevelUp();
+  updateHeader();
+  saveState();
+  return boosted;
+}
+
+function checkLevelUp() {
+  const needed = XP_PER_LEVEL(GS.player.level);
+  if (GS.player.xp >= needed) {
+    GS.player.xp -= needed;
+    GS.player.level++;
+    GS.player.hp = Math.min(GS.player.maxHp, GS.player.hp + 20);
+    showLevelUp(GS.player.level);
+    toast('ПОВЫШЕНИЕ УРОВНЯ', `Достигнут Уровень ${GS.player.level}. +20 HP. Продолжайте операции.`, 'info', 5000);
+    updateHeader();
+  }
+}
+
+function showLevelUp(level) {
+  const el = document.createElement('div');
+  el.className = 'levelup-msg';
+  el.innerHTML = `
+    <div class="levelup-text">УРОВЕНЬ ${level}</div>
+    <div class="levelup-sub">ПРОТОКОЛ ПОВЫШЕН</div>
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.5s';
+    setTimeout(() => el.remove(), 600);
+  }, 2500);
+}
+
+function triggerExplosion() {
+  const el = document.getElementById('explosion-overlay');
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 300);
+}
+
+function updateHeader() {
+  document.getElementById('hdr-hp').textContent = GS.player.hp;
+  document.getElementById('hdr-emeralds').textContent = GS.player.emeralds;
+  document.getElementById('hdr-xp').textContent = GS.player.xp;
+  document.getElementById('hdr-level').textContent = GS.player.level;
+
+  const hpPct = (GS.player.hp / GS.player.maxHp) * 100;
+  const bar = document.getElementById('hdr-hp-bar');
+  bar.style.width = hpPct + '%';
+  if (hpPct <= 25) {
+    bar.style.background = 'linear-gradient(90deg, #7f1d1d, var(--crimson))';
+    bar.style.boxShadow = '0 0 6px rgba(239,68,68,0.6)';
+  } else if (hpPct <= 50) {
+    bar.style.background = 'linear-gradient(90deg, var(--amber-dim, #b45309), var(--amber))';
+    bar.style.boxShadow = '0 0 6px rgba(245,158,11,0.5)';
+  } else {
+    bar.style.background = 'linear-gradient(90deg, var(--emerald-dim), var(--emerald))';
+    bar.style.boxShadow = '0 0 6px var(--emerald)';
+  }
+}
+
+// ============================================================
+// MISSION MATRIX
+// ============================================================
+function addMission() {
+  const title = document.getElementById('m-title').value.trim();
+  const desc = document.getElementById('m-desc').value.trim();
+  const rank = document.getElementById('m-rank').value;
+  const deadline = document.getElementById('m-deadline').value;
+  const category = document.getElementById('m-category').value;
+
+  if (!title) { toast('ОШИБКА ВВОДА', 'Введите наименование операции.', 'warning'); return; }
+
+  const cfg = RANK_CONFIG[rank];
+  const mission = {
+    id: Date.now(),
+    title,
+    desc,
+    rank,
+    deadline,
+    category,
+    xp: cfg.xp,
+    emeralds: cfg.emeralds,
+    completed: false,
+    createdAt: new Date().toISOString(),
+    completedAt: null
+  };
+
+  GS.missions.unshift(mission);
+  saveState();
+  closeModal('mission-modal');
+  renderMissions();
+  updateDashboardStats();
+
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-desc').value = '';
+
+  toast('МИССИЯ ЗАРЕГИСТРИРОВАНА', `Операция "${title}" [${rank}] добавлена в матрицу.`, 'success');
+}
+
+function completeMission(id) {
+  const mission = GS.missions.find(m => m.id === id);
+  if (!mission || mission.completed) return;
+
+  mission.completed = true;
+  mission.completedAt = new Date().toISOString();
+
+  const cfg = RANK_CONFIG[mission.rank];
+
+  // Logarithmic XP scaling with difficulty
+  const logScale = 1 + Math.log(cfg.xp) / 10;
+  const xpGain = Math.floor(cfg.xp * logScale);
+
+  // Emerald gain (double if boost active)
+  let emGain = cfg.emeralds;
+  if (GS.emeraldDoubleCharges > 0) {
+    emGain *= 2;
+    GS.emeraldDoubleCharges--;
+  }
+
+  // Burnout check for high-rank missions
+  let burnoutHit = false;
+  if (cfg.burnout && Math.random() < cfg.burnoutChance) {
+    if (GS.burnoutImmunity > 0) {
+      GS.burnoutImmunity--;
+      toast('ОБСИДИАНОВЫЙ КОР', 'Нейронное Выгорание заблокировано артефактом!', 'info');
+    } else {
+      burnoutHit = true;
+    }
+  }
+
+  const gained = addXP(xpGain);
+  modifyEmeralds(emGain);
+
+  GS.player.totalMissions++;
+  GS.focus.sessions++;
+  GS.player.streak++;
+
+  // Claim today in calendar
+  const today = getTodayKey();
+  if (!GS.calendar[today]) GS.calendar[today] = { claimed: false, tasks: 0 };
+  GS.calendar[today].tasks = (GS.calendar[today].tasks || 0) + 1;
+  if (GS.calendar[today].tasks >= 1) GS.calendar[today].claimed = true;
+
+  // Guild energy contribution
+  GS.guild.dailyEnergy = (GS.guild.dailyEnergy || 0) + 1;
+  checkGuildQuota();
+
+  saveState();
+  renderMissions();
+  renderCalendar();
+  updateDashboardStats();
+
+  let msg = `Добыто ${gained} XP и ${emGain} изумрудов. Сектор захвачен.`;
+  toast(`ОПЕРАЦИЯ ЗАВЕРШЕНА [${mission.rank}]`, msg, 'success');
+
+  if (burnoutHit) {
+    setTimeout(() => modifyHP(-15, `S-ранг вызвал Нейронное Выгорание.`), 500);
+  }
+}
+
+function deleteMission(id) {
+  GS.missions = GS.missions.filter(m => m.id !== id);
+  saveState();
+  renderMissions();
+  updateDashboardStats();
+}
+
+function renderMissions() {
+  const list = document.getElementById('mission-list');
+  const empty = document.getElementById('mission-empty');
+  const active = GS.missions.filter(m => !m.completed);
+  const done = GS.missions.filter(m => m.completed);
+  const all = [...active, ...done];
+
+  if (all.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = all.map(m => {
+    const cfg = RANK_CONFIG[m.rank];
+    const deadlineStr = m.deadline
+      ? `<span style="font-size:9px;color:var(--text-muted)">${m.deadline}</span>` : '';
+    return `
+      <div class="mission-item${m.completed ? ' completed' : ''}" data-rank="${m.rank}">
+        <div class="mission-check${m.completed ? ' checked' : ''}" onclick="completeMission(${m.id})">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <div class="task-footer">
-          <div style="display:flex; gap:10px; font-weight:800; font-size:13px;">
-            <span style="color:var(--accent);">+${t.points} XP</span>
-            <span style="color:var(--gem);">+${Math.max(1, Math.floor(t.points/10))} 💎</span>
+        <div class="mission-info">
+          <div class="mission-title">${escHtml(m.title)}</div>
+          <div class="mission-meta">
+            <span class="rank-badge rank-${m.rank}">${m.rank}-РАНГ</span>
+            <span class="mission-reward">+${cfg.xp} XP / +${cfg.emeralds} EMR</span>
+            ${deadlineStr}
           </div>
-          <button class="btn" style="width:auto; padding:8px 18px; font-size:12px;" onclick="finishTask(${t.id})" ${t.completed?'disabled':''}>${t.completed?'Пройдено':'Сдать'}</button>
+        </div>
+        <div class="mission-actions">
+          <button class="btn btn-ghost btn-sm" onclick="deleteMission(${m.id})">x</button>
         </div>
       </div>
     `;
-    if(t.task_type === 'daily') dGrid.innerHTML += card; else mGrid.innerHTML += card;
-  });
+  }).join('');
 }
 
-async function finishTask(id) {
-  const r = await call('/complete_task', {method:'POST', body:JSON.stringify({task_id:id})});
-  if(r.status === 'ok') { showToast(`Добыча: +${r.points_earned} XP и +${r.gems_earned} 💎`, 'success'); loadProfile(); loadTasks(); }
+function updateDashboardStats() {
+  const active = GS.missions.filter(m => !m.completed).length;
+  const today = getTodayKey();
+  const doneToday = GS.missions.filter(m => {
+    if (!m.completedAt) return false;
+    return m.completedAt.startsWith(new Date().toISOString().slice(0,10));
+  }).length;
+
+  document.getElementById('stat-active-missions').textContent = active;
+  document.getElementById('stat-done-today').textContent = doneToday;
+  document.getElementById('stat-streak').textContent = GS.player.streak;
+
+  const dailyGoal = 5;
+  document.getElementById('daily-progress-bar').style.width = Math.min(100, (doneToday/dailyGoal)*100) + '%';
 }
 
-async function buyItem(itemId, cost) {
-  try {
-    const r = await call('/buy_item', {method:'POST', body:JSON.stringify({item_id:itemId, cost:cost})});
-    if(r.status === 'ok') { showToast("Предмет куплен и применен!", 'success'); loadProfile(); }
-    else { showToast(r.detail, 'error'); }
-  } catch(err) { showToast("Ошибка покупки", "error"); }
+// ============================================================
+// CHRONOS GRID (CALENDAR)
+// ============================================================
+function getTodayKey() {
+  return new Date().toISOString().slice(0,10);
 }
 
-async function loadLeaderboard() {
-  const d = await call('/leaderboard');
-  const l = document.getElementById('lbList'); l.innerHTML = '';
-  d.forEach((u, i) => {
-    l.innerHTML += `
-      <div class="lb-item">
-        <div style="width:40px; font-size:20px; font-weight:900; color:var(--text-muted);">${i===0?'👑':i+1}</div>
-        <div style="flex:1;">
-          <div style="font-weight:700; font-size:16px;">${u.username}</div>
-          <div style="font-size:11px; color:var(--accent); text-transform:uppercase;">${u.rank} (Lvl ${u.level})</div>
-        </div>
-        <div style="color:var(--primary); font-weight:800; font-size:16px;">${u.points} XP</div>
-      </div>`;
-  });
+function renderCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+
+  const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                      'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  document.getElementById('chronos-month').textContent = `${monthNames[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const startOffset = (firstDay + 6) % 7; // Monday start
+
+  const dayNames = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
+  let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+  for (let i = 0; i < startOffset; i++) {
+    html += `<div class="cal-day empty"></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const data = GS.calendar[key] || {};
+    const isToday = d === today;
+    const claimed = data.claimed;
+    const yielded = d < today && !claimed;
+    const tasks = data.tasks || 0;
+
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    if (claimed) cls += ' claimed';
+    else if (yielded) cls += ' yielded';
+
+    const dots = tasks > 0 ? Array(Math.min(tasks, 3)).fill('<div class="cal-dot"></div>').join('') : '';
+
+    html += `
+      <div class="${cls}" title="${key}">
+        <span class="cal-day-num">${d}</span>
+        <div class="cal-day-dots">${dots}</div>
+      </div>
+    `;
+  }
+
+  document.getElementById('calendar-grid').innerHTML = html;
 }
 
-// Timer
-let tInt;
-function startTimer(m) {
-  clearInterval(tInt); let s = m*60;
-  tInt = setInterval(() => { s--; let min = Math.floor(s/60), sec = s%60; document.getElementById('timerDisplay').innerText = `${min}:${sec<10?'0':''}${sec}`; if(s<=0) { clearInterval(tInt); showToast("Фокус завершен! +10 XP", 'success'); } }, 1000);
+// ============================================================
+// FOCUS SIPHON ENGINE
+// ============================================================
+let focusTimer = null;
+let focusState = {
+  running: false,
+  paused: false,
+  onBreak: false,
+  timeLeft: 0,
+  totalTime: 0,
+  deviations: 0
+};
+
+function focusControl(action) {
+  if (action === 'start') {
+    const mins = parseInt(document.getElementById('focus-duration-input').value) || 25;
+    const reduction = GS.focusTimeReduction || 0;
+    const actualMins = Math.max(1, mins - reduction);
+    if (reduction > 0) {
+      GS.focusTimeReduction = 0;
+      toast('РТУТЬ УСКОРЕНИЯ', `Время дистилляции сокращено на ${reduction} мин.`, 'info');
+    }
+    focusState.totalTime = actualMins * 60;
+    focusState.timeLeft = focusState.totalTime;
+    focusState.running = true;
+    focusState.paused = false;
+    focusState.onBreak = false;
+    focusState.deviations = 0;
+
+    updateFocusUI();
+    startFocusTick();
+    logFocus('ИНИЦИАЛИЗАЦИЯ', `Дистилляция начата. Продолжительность: ${actualMins} мин.`, 'success');
+
+    document.getElementById('focus-start-btn').style.display = 'none';
+    document.getElementById('focus-pause-btn').style.display = 'inline-flex';
+    document.getElementById('focus-abort-btn').style.display = 'inline-flex';
+
+    document.getElementById('distill-phase').textContent = 'АКТИВНАЯ ДИСТИЛЛЯЦИЯ';
+    document.getElementById('distill-phase').className = 'distill-phase active';
+
+  } else if (action === 'pause') {
+    if (focusState.paused) {
+      focusState.paused = false;
+      startFocusTick();
+      document.getElementById('focus-pause-btn').textContent = 'ПАУЗА';
+      logFocus('ВОЗОБНОВЛЕНИЕ', 'Дистилляция возобновлена.', 'success');
+    } else {
+      focusState.paused = true;
+      clearInterval(focusTimer);
+      document.getElementById('focus-pause-btn').textContent = 'ПРОДОЛЖИТЬ';
+      logFocus('ПАУЗА', 'Дистилляция приостановлена.', 'warn');
+    }
+
+  } else if (action === 'abort') {
+    clearInterval(focusTimer);
+    focusState.running = false;
+
+    // 25% HP loss on abort
+    const hpLoss = Math.floor(GS.player.maxHp * 0.25);
+    const emLoss = Math.floor(GS.player.emeralds * 0.05);
+    modifyHP(-hpLoss, 'Прерванная дистилляция.');
+    modifyEmeralds(-emLoss);
+    GS.player.failedFocus++;
+    GS.player.streak = 0;
+
+    logFocus('ВЗРЫВ', `ДИСТИЛЛЯЦИЯ ПРЕРВАНА. Потеряно ${hpLoss} HP и ${emLoss} изумрудов.`, 'danger');
+    resetFocusUI();
+    saveState();
+  }
 }
 
-// Nav
-document.querySelectorAll('.nav-item[data-target]').forEach(n => {
-  n.onclick = () => {
-    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active')); n.classList.add('active');
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(`sec-${n.dataset.target}`).classList.add('active');
-    if(n.dataset.target === 'leaderboard') loadLeaderboard();
+function startFocusTick() {
+  clearInterval(focusTimer);
+  focusTimer = setInterval(() => {
+    if (!focusState.paused && focusState.running) {
+      focusState.timeLeft--;
+      updateFocusRing();
+      updateFocusTimerDisplay();
+
+      if (focusState.timeLeft <= 0) {
+        onFocusComplete();
+      }
+    }
+  }, 1000);
+}
+
+function onFocusComplete() {
+  clearInterval(focusTimer);
+
+  if (focusState.onBreak) {
+    focusState.onBreak = false;
+    GS.focus.cycle++;
+    document.getElementById('focus-cycle').textContent = GS.focus.cycle;
+    logFocus('ОТДЫХ ЗАВЕРШЁН', 'Перерыв закончен. Готов к следующему циклу.', 'success');
+    resetFocusUI();
+    toast('ПЕРЕРЫВ ЗАВЕРШЁН', 'Дистилляция перезарядилась. Цикл ' + GS.focus.cycle, 'info');
+  } else {
+    // Successful focus session
+    const xpGain = 40 + (GS.focus.cycle * 5);
+    const gained = addXP(xpGain);
+    GS.focus.sessions++;
+    document.getElementById('focus-sessions').textContent = GS.focus.sessions;
+    GS.player.streak++;
+    document.getElementById('stat-streak').textContent = GS.player.streak;
+
+    logFocus('ДИСТИЛЛЯЦИЯ ЗАВЕРШЕНА', `Успешная сессия. Добыто ${gained} XP. Переход на перерыв.`, 'success');
+    toast('ДИСТИЛЛЯЦИЯ ЗАВЕРШЕНА', `Цикл ${GS.focus.cycle} завершён. +${gained} XP. Перерыв начат.`, 'success');
+
+    // Start break
+    const breakMins = parseInt(document.getElementById('break-duration-input').value) || 5;
+    focusState.onBreak = true;
+    focusState.totalTime = breakMins * 60;
+    focusState.timeLeft = focusState.totalTime;
+    focusState.running = true;
+    focusState.paused = false;
+
+    document.getElementById('distill-phase').textContent = 'ФАЗА РЕГЕНЕРАЦИИ';
+    document.getElementById('distill-phase').className = 'distill-phase';
+    document.getElementById('ring-fill-el').classList.remove('danger');
+
+    startFocusTick();
+
+    // Claim today in calendar on successful focus
+    const today = getTodayKey();
+    if (!GS.calendar[today]) GS.calendar[today] = { claimed: false, tasks: 0 };
+    GS.calendar[today].claimed = true;
+    renderCalendar();
+  }
+
+  saveState();
+}
+
+function resetFocusUI() {
+  focusState.running = false;
+  clearInterval(focusTimer);
+  document.getElementById('focus-start-btn').style.display = 'inline-flex';
+  document.getElementById('focus-pause-btn').style.display = 'none';
+  document.getElementById('focus-abort-btn').style.display = 'none';
+  document.getElementById('focus-pause-btn').textContent = 'ПАУЗА';
+  document.getElementById('distill-phase').textContent = 'ОЖИДАНИЕ';
+  document.getElementById('distill-phase').className = 'distill-phase';
+  document.getElementById('distill-time').textContent = '25:00';
+  document.getElementById('ring-fill-el').style.strokeDashoffset = '0';
+  document.getElementById('ring-fill-el').classList.remove('danger');
+}
+
+function updateFocusUI() {
+  updateFocusRing();
+  updateFocusTimerDisplay();
+}
+
+function updateFocusTimerDisplay() {
+  const mins = Math.floor(focusState.timeLeft / 60);
+  const secs = focusState.timeLeft % 60;
+  document.getElementById('distill-time').textContent =
+    String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+
+  // Warning state
+  if (focusState.timeLeft < 60 && !focusState.onBreak) {
+    document.getElementById('ring-fill-el').classList.add('danger');
+  }
+}
+
+function updateFocusRing() {
+  const circumference = 628.3;
+  const pct = focusState.timeLeft / focusState.totalTime;
+  const offset = circumference * (1 - pct);
+  document.getElementById('ring-fill-el').style.strokeDashoffset = offset;
+}
+
+function logFocus(event, msg, type = '') {
+  const log = document.getElementById('focus-log');
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const item = document.createElement('div');
+  item.className = `focus-log-item${type ? ' event-'+type : ''}`;
+  item.innerHTML = `<span class="flog-time">${timeStr}</span><span class="flog-msg">[${event}] ${msg}</span>`;
+  log.insertBefore(item, log.firstChild);
+  while (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+// Page Visibility / Focus deviation detection
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && focusState.running && !focusState.paused && !focusState.onBreak) {
+    handleFocusDeviation('Переключение вкладки');
   }
 });
-document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); location.reload(); };
 
-async function initApp() {
-  if(localStorage.getItem('token')) { document.getElementById('authWrapper').style.display='none'; document.getElementById('appLayout').classList.add('active'); loadProfile(); loadTasks(); }
+window.addEventListener('blur', () => {
+  if (focusState.running && !focusState.paused && !focusState.onBreak) {
+    handleFocusDeviation('Потеря фокуса окна');
+  }
+});
+
+function handleFocusDeviation(reason) {
+  focusState.deviations++;
+  const hpLoss = Math.floor(GS.player.maxHp * 0.25);
+  const emLoss = Math.floor(GS.player.emeralds * 0.05);
+
+  clearInterval(focusTimer);
+  focusState.running = false;
+
+  triggerExplosion();
+  logFocus('ВЗРЫВ РЕАКТОРА', `ОТКЛОНЕНИЕ: ${reason}. Потеряно ${hpLoss} HP и ${emLoss} изумрудов.`, 'danger');
+
+  modifyHP(-hpLoss, `Отклонение во время дистилляции: ${reason}`);
+  if (emLoss > 0) modifyEmeralds(-emLoss);
+  GS.player.failedFocus++;
+  GS.player.streak = 0;
+
+  resetFocusUI();
+  saveState();
+
+  setTimeout(() => {
+    toast('ДИСТИЛЛЯЦИЯ ПРЕРВАНА', `${reason} вызвал взрыв реактора. -${hpLoss} HP, -${emLoss} изумрудов.`, 'danger', 5000);
+  }, 100);
 }
-initApp();
+
+// ============================================================
+// ARENA ENGINE
+// ============================================================
+function renderArena() {
+  document.getElementById('arena-setup').style.display = 'block';
+  renderArenaCombatants();
+}
+
+function renderArenaCombatants() {
+  const arena = GS.arena;
+  const playerPowerBase = (GS.player.level * 10) + (GS.player.totalMissions * 2) + (GS.arenaPowerBonus || 0);
+  const enemyPowerBase = arena.enemyPower || 50;
+
+  document.getElementById('arena-field').innerHTML = `
+    <div class="combatant player">
+      <div class="combatant-name">${escHtml(GS.player.name)}</div>
+      <div class="combatant-hp-bar">
+        <div class="combatant-hp-fill player" id="player-hp-fill" style="width:${(arena.playerHp/arena.playerMaxHp)*100}%"></div>
+      </div>
+      <div class="combatant-hp-val" id="player-hp-val">${arena.playerHp} / ${arena.playerMaxHp}</div>
+      <div class="combatant-power">МОЩЬ: <span>${playerPowerBase}</span></div>
+      <div class="combatant-sprites" id="player-sprites">
+        ${renderPlayerArtifacts()}
+      </div>
+    </div>
+    <div class="vs-divider"><span class="vs-text">VS</span></div>
+    <div class="combatant enemy">
+      <div class="combatant-name" id="enemy-name">${escHtml(arena.enemyName)}</div>
+      <div class="combatant-hp-bar">
+        <div class="combatant-hp-fill enemy" id="enemy-hp-fill" style="width:${(arena.enemyHp/arena.enemyMaxHp)*100}%"></div>
+      </div>
+      <div class="combatant-hp-val" id="enemy-hp-val">${arena.enemyHp} / ${arena.enemyMaxHp}</div>
+      <div class="combatant-power">МОЩЬ: <span id="enemy-power-val">${enemyPowerBase}</span></div>
+      <div class="combatant-sprites">
+        <span class="sprite artifact">Кинетик</span>
+        <span class="sprite potion">Яд Мрака</span>
+      </div>
+    </div>
+  `;
+
+  renderArenaActions();
+}
+
+function renderPlayerArtifacts() {
+  return GS.ownedArtifacts.slice(0, 4).map(aid => {
+    const art = ARTIFACT_CATALOG.find(a => a.id === aid);
+    if (!art) return '';
+    return `<span class="sprite artifact" onclick="useArtifactInCombat('${aid}')">${art.name.split(' ')[0]}</span>`;
+  }).join('') + `<span class="sprite potion" onclick="usePotionInCombat()">Эликсир</span>`;
+}
+
+function renderArenaActions() {
+  const btns = document.getElementById('arena-action-btns');
+  if (!GS.arena.inProgress) {
+    btns.innerHTML = '';
+    return;
+  }
+
+  if (!GS.arena.playerTurn) {
+    btns.innerHTML = `<span style="font-family:var(--font-tact);font-size:11px;color:var(--text-muted)">ХОД ПРОТИВНИКА...</span>`;
+    return;
+  }
+
+  btns.innerHTML = `
+    <button class="btn btn-emerald" onclick="arenaAttack('normal')">АТАКА ЭФИРОМ</button>
+    <button class="btn btn-violet" onclick="arenaAttack('heavy')">ТЯЖЁЛЫЙ УДАР</button>
+    <button class="btn btn-ghost" onclick="arenaAttack('defend')">ОБОРОНИТЕЛЬНАЯ СТОЙКА</button>
+  `;
+}
+
+function initCombat() {
+  document.getElementById('arena-setup').style.display = 'block';
+}
+
+function startDuel() {
+  const name = document.getElementById('opponent-name-input').value.trim() || 'АЛХИМИК ВАРАШ';
+  const tier = parseInt(document.getElementById('opponent-tier-input').value);
+  const tierMult = [0, 0.8, 1.0, 1.3, 1.7, 2.5][tier];
+
+  const playerPower = (GS.player.level * 10) + (GS.player.totalMissions * 2) + (GS.arenaPowerBonus || 0);
+  const enemyPower = Math.floor(playerPower * tierMult);
+
+  GS.arena = {
+    combatLog: [],
+    playerHp: 100,
+    enemyHp: 100,
+    playerMaxHp: 100,
+    enemyMaxHp: 100,
+    playerPower: playerPower,
+    enemyPower: enemyPower,
+    enemyName: name,
+    inProgress: true,
+    playerTurn: true,
+    playerDefending: false
+  };
+
+  document.getElementById('arena-setup').style.display = 'none';
+  renderArenaCombatants();
+  renderArenaActions();
+
+  const log = document.getElementById('tactical-log');
+  log.innerHTML = '';
+  addTacticalLog(`Дуэль начата. ${GS.player.name} против ${name}.`, 'system');
+  addTacticalLog(`Сила игрока: ${playerPower}. Сила противника: ${enemyPower}.`, 'system');
+
+  saveState();
+}
+
+function arenaAttack(type) {
+  if (!GS.arena.inProgress || !GS.arena.playerTurn) return;
+
+  const arena = GS.arena;
+  let dmg = 0;
+  let miss = false;
+
+  if (type === 'normal') {
+    dmg = Math.floor(arena.playerPower * (0.15 + Math.random() * 0.1));
+    addTacticalLog(`${GS.player.name} наносит удар Эфиром — `, 'player', `${dmg} урона`, 'dmg');
+  } else if (type === 'heavy') {
+    if (Math.random() < 0.3) {
+      miss = true;
+      addTacticalLog(`${GS.player.name} промахивается с тяжёлым ударом!`, 'player');
+    } else {
+      dmg = Math.floor(arena.playerPower * (0.25 + Math.random() * 0.15));
+      addTacticalLog(`${GS.player.name} наносит ТЯЖЁЛЫЙ УДАР — `, 'player', `${dmg} урона`, 'dmg');
+    }
+  } else if (type === 'defend') {
+    arena.playerDefending = true;
+    addTacticalLog(`${GS.player.name} принимает оборонительную стойку (-50% входящего урона).`, 'player');
+  }
+
+  if (dmg > 0) {
+    arena.enemyHp = Math.max(0, arena.enemyHp - dmg);
+    showCombatFlash('emerald');
+    updateArenaHPBars();
+  }
+
+  if (arena.enemyHp <= 0) {
+    onCombatEnd(true);
+    return;
+  }
+
+  arena.playerTurn = false;
+  renderArenaActions();
+
+  // Enemy turn after delay
+  setTimeout(() => enemyTurn(), 1200);
+}
+
+function enemyTurn() {
+  const arena = GS.arena;
+  if (!arena.inProgress) return;
+
+  const actions = ['attack', 'attack', 'attack', 'heavy', 'special'];
+  const action = actions[Math.floor(Math.random() * actions.length)];
+  let dmg = 0;
+
+  if (action === 'attack') {
+    dmg = Math.floor(arena.enemyPower * (0.12 + Math.random() * 0.08));
+    addTacticalLog(`${arena.enemyName} атакует — `, 'enemy', `${dmg} урона`, 'dmg');
+  } else if (action === 'heavy') {
+    dmg = Math.floor(arena.enemyPower * (0.2 + Math.random() * 0.15));
+    addTacticalLog(`${arena.enemyName} наносит мощный удар — `, 'enemy', `${dmg} урона`, 'dmg');
+  } else {
+    dmg = Math.floor(arena.enemyPower * 0.25);
+    addTacticalLog(`${arena.enemyName} применяет Яд Мрака — `, 'enemy', `${dmg} урона`, 'dmg');
+  }
+
+  if (arena.playerDefending) {
+    dmg = Math.floor(dmg * 0.5);
+    addTacticalLog(`Оборонительная стойка снизила урон вдвое: ${dmg}`, 'system');
+    arena.playerDefending = false;
+  }
+
+  if (dmg > 0) {
+    arena.playerHp = Math.max(0, arena.playerHp - dmg);
+    showCombatFlash('crimson');
+    updateArenaHPBars();
+  }
+
+  if (arena.playerHp <= 0) {
+    onCombatEnd(false);
+    return;
+  }
+
+  arena.playerTurn = true;
+  renderArenaActions();
+  saveState();
+}
+
+function onCombatEnd(playerWon) {
+  GS.arena.inProgress = false;
+
+  if (playerWon) {
+    const xpGain = Math.floor(GS.arena.enemyPower * 1.5);
+    const emGain = Math.floor(GS.arena.enemyPower * 0.8);
+    addXP(xpGain);
+    modifyEmeralds(emGain);
+    addTacticalLog(`ПОБЕДА. ${GS.player.name} одержал верх. +${xpGain} XP, +${emGain} изумрудов.`, 'system');
+    toast('ПОБЕДА В ДУЭЛИ', `${GS.arena.enemyName} повержен. +${xpGain} XP.`, 'success');
+  } else {
+    const hpLoss = 20;
+    modifyHP(-hpLoss, 'Поражение в дуэли Арены.');
+    addTacticalLog(`ПОРАЖЕНИЕ. ${GS.arena.enemyName} одержал победу. -${hpLoss} HP.`, 'system');
+    toast('ПОРАЖЕНИЕ В ДУЭЛИ', `Вы проиграли дуэль. -${hpLoss} HP.`, 'danger');
+  }
+
+  document.getElementById('arena-action-btns').innerHTML = `
+    <button class="btn btn-emerald" onclick="initCombat()">НОВАЯ ДУЭЛЬ</button>
+  `;
+
+  saveState();
+}
+
+function addTacticalLog(msg, type, extra = '', extraType = '') {
+  const log = document.getElementById('tactical-log');
+  const time = new Date().toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const line = document.createElement('div');
+  line.className = 'tlog-line';
+  line.innerHTML = `<span class="tl-time">[${time}]</span> <span class="tl-${type}">${msg}</span>${extra ? `<span class="tl-${extraType}">${extra}</span>` : ''}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  while (log.children.length > 100) log.removeChild(log.firstChild);
+}
+
+function updateArenaHPBars() {
+  const a = GS.arena;
+  document.getElementById('player-hp-fill').style.width = Math.max(0, (a.playerHp/a.playerMaxHp)*100) + '%';
+  document.getElementById('enemy-hp-fill').style.width = Math.max(0, (a.enemyHp/a.enemyMaxHp)*100) + '%';
+  document.getElementById('player-hp-val').textContent = `${a.playerHp} / ${a.playerMaxHp}`;
+  document.getElementById('enemy-hp-val').textContent = `${a.enemyHp} / ${a.enemyMaxHp}`;
+}
+
+function showCombatFlash(color) {
+  const el = document.createElement('div');
+  el.className = 'combat-flash';
+  el.style.background = `linear-gradient(90deg, transparent, var(--${color}), transparent)`;
+  el.style.boxShadow = `0 0 10px var(--${color})`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 400);
+}
+
+function useArtifactInCombat(artifactId) {
+  const art = ARTIFACT_CATALOG.find(a => a.id === artifactId);
+  if (!art || !GS.arena.inProgress) return;
+
+  if (artifactId === 'prism_of_focus') {
+    const bonus = Math.floor(GS.arena.playerPower * 0.2);
+    GS.arena.playerPower += bonus;
+    addTacticalLog(`${GS.player.name} активирует ${art.name}: +${bonus} к силе.`, 'player');
+    renderArenaCombatants();
+  } else if (artifactId === 'shield_of_silence') {
+    GS.arena.playerDefending = true;
+    addTacticalLog(`${GS.player.name} активирует ${art.name}: урон блокирован.`, 'player');
+  } else {
+    addTacticalLog(`${GS.player.name} активирует ${art.name}.`, 'player');
+  }
+  toast(`АРТЕФАКТ АКТИВИРОВАН`, `${art.name} применён в бою.`, 'info');
+}
+
+function usePotionInCombat() {
+  if (!GS.arena.inProgress) return;
+  const heal = Math.floor(30 + Math.random() * 20);
+  GS.arena.playerHp = Math.min(GS.arena.playerMaxHp, GS.arena.playerHp + heal);
+  updateArenaHPBars();
+  addTacticalLog(`${GS.player.name} использует Эликсир. +${heal} HP.`, 'player');
+  if (GS.player.emeralds >= 5) modifyEmeralds(-5);
+}
+
+// ============================================================
+// GUILD WARFARE
+// ============================================================
+function renderGuild() {
+  checkGuildDailyReset();
+
+  const lev = GS.guild;
+  const pct = (lev.leviathanHp / lev.leviathanMaxHp) * 100;
+  document.getElementById('lev-hp-bar').style.width = pct + '%';
+  document.getElementById('lev-hp-label').textContent = `${lev.leviathanHp} / ${lev.leviathanMaxHp}`;
+  document.getElementById('guild-quota-display').textContent = `${lev.dailyEnergy} / ${GUILD_DAILY_QUOTA}`;
+
+  const frozen = GS.leviathanFrozenUntil > Date.now();
+  document.getElementById('guild-siege-status').textContent = frozen ? 'ЗАМОРОЖЕН' : (lev.dailyEnergy >= GUILD_DAILY_QUOTA ? 'ОТБИТ' : 'УГРОЗА');
+
+  const list = document.getElementById('guild-members-list');
+  if (!lev.members || lev.members.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-muted);font-family:var(--font-tact);font-size:11px;padding:20px;letter-spacing:0.1em">ГИЛЬДИЯ НЕ СФОРМИРОВАНА</div>`;
+    return;
+  }
+
+  list.innerHTML = lev.members.map(m => {
+    const energyPct = Math.min(100, (m.energy / GUILD_DAILY_QUOTA) * 100);
+    const initials = m.name.slice(0, 2).toUpperCase();
+    return `
+      <div class="guild-member">
+        <div class="member-avatar">${initials}</div>
+        <div class="member-info">
+          <div class="member-name">${escHtml(m.name)}</div>
+          <div class="member-contribution">${m.class} — Энергия: ${m.energy}/${GUILD_DAILY_QUOTA}</div>
+        </div>
+        <div>
+          <div class="member-energy-bar">
+            <div class="member-energy-fill" style="width:${energyPct}%"></div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removeGuildMember('${m.id}')">x</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function addGuildMember() {
+  const name = document.getElementById('gm-name').value.trim();
+  const cls = document.getElementById('gm-class').value;
+  if (!name) { toast('ОШИБКА', 'Введите позывной бойца.', 'warning'); return; }
+
+  const classNames = {
+    transmuter: 'ТРАНСМУТАТОР',
+    distiller: 'ДИСТИЛЛЯТОР',
+    crystallizer: 'КРИСТАЛЛИЗАТОР',
+    voidseer: 'ПРОВИДЕЦ ПУСТОТЫ'
+  };
+
+  GS.guild.members.push({
+    id: Date.now().toString(),
+    name,
+    class: classNames[cls],
+    energy: 0,
+    joinedAt: new Date().toISOString()
+  });
+
+  saveState();
+  closeModal('guild-member-modal');
+  renderGuild();
+  document.getElementById('gm-name').value = '';
+
+  toast('РЕКРУТ ПРИНЯТ', `${name} (${classNames[cls]}) зачислен в гильдию.`, 'success');
+}
+
+function removeGuildMember(id) {
+  GS.guild.members = GS.guild.members.filter(m => m.id !== id);
+  saveState();
+  renderGuild();
+}
+
+function contributeEnergy() {
+  GS.guild.dailyEnergy = (GS.guild.dailyEnergy || 0) + 1;
+
+  // Give energy to self as first "member"
+  if (GS.guild.members.length > 0) {
+    GS.guild.members[0].energy = (GS.guild.members[0].energy || 0) + 1;
+  }
+
+  // Deal damage to Leviathan
+  const dmg = 50 + Math.floor(GS.player.level * 10);
+  GS.guild.leviathanHp = Math.max(0, GS.guild.leviathanHp - dmg);
+
+  if (GS.guild.leviathanHp <= 0) {
+    GS.guild.leviathanHp = GS.guild.leviathanMaxHp;
+    addXP(300);
+    modifyEmeralds(100);
+    toast('ЛЕВИАФАН ПОВЕРЖЕН', 'Мировой Босс уничтожен! +300 XP, +100 изумрудов. Новый цикл начат.', 'success', 7000);
+  }
+
+  checkGuildQuota();
+  saveState();
+  renderGuild();
+
+  toast('ЭНЕРГИЯ ВНЕСЕНА', `Нанесено ${dmg} урона Левиафану. Заряд: ${GS.guild.dailyEnergy}/${GUILD_DAILY_QUOTA}`, 'info');
+}
+
+function checkGuildQuota() {
+  const quota = GUILD_DAILY_QUOTA;
+  const current = GS.guild.dailyEnergy || 0;
+
+  if (current < quota) {
+    // Leviathan strikes if quota unmet at end of day
+    // This is checked on load/daily reset
+  }
+}
+
+function checkGuildDailyReset() {
+  const today = getTodayKey();
+  if (GS.guild.lastResetDate !== today) {
+    const prevEnergy = GS.guild.dailyEnergy || 0;
+    const quota = GUILD_DAILY_QUOTA;
+
+    if (GS.guild.lastResetDate && prevEnergy < quota) {
+      const frozen = GS.leviathanFrozenUntil > Date.now();
+      if (!frozen) {
+        // Leviathan attacks
+        const strike = 15;
+        modifyHP(-strike, 'Левиафан атаковал за невыполненную квоту гильдии!');
+        GS.guild.members.forEach(m => { m.energy = 0; });
+        toast('АТАКА ЛЕВИАФАНА', `Квота не выполнена (${prevEnergy}/${quota}). Левиафан атакует всех участников! -${strike} HP.`, 'danger', 6000);
+      } else {
+        toast('ПЕЧАТЬ ПУСТОТЫ', 'Левиафан заморожен. Атака отражена.', 'info');
+      }
+    }
+
+    GS.guild.dailyEnergy = 0;
+    GS.guild.lastResetDate = today;
+    GS.guild.members.forEach(m => { m.energy = 0; });
+    saveState();
+  }
+}
+
+// ============================================================
+// ARMORY & CRAFTING
+// ============================================================
+function renderArmory() {
+  document.getElementById('armory-emerald-count').textContent = GS.player.emeralds;
+
+  const grid = document.getElementById('artifact-grid');
+  grid.innerHTML = ARTIFACT_CATALOG.map(art => {
+    const owned = GS.ownedArtifacts.includes(art.id);
+    return `
+      <div class="artifact-card tier-${art.tier}${owned ? ' owned' : ''}">
+        <div class="artifact-tier-bar"></div>
+        <div class="artifact-header">
+          <div class="artifact-name">${art.name}</div>
+          <div class="artifact-tier-badge">${tierLabel(art.tier)}</div>
+        </div>
+        <div class="artifact-desc">${art.desc}</div>
+        <div class="artifact-effect">${art.effect}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div class="artifact-cost">${art.cost} EMR</div>
+          ${!owned ? `<button class="btn btn-emerald btn-sm" onclick="transmute('${art.id}')">ТРАНСМУТИРОВАТЬ</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function tierLabel(tier) {
+  const labels = {
+    common: 'ОБЫЧНЫЙ',
+    rare: 'РЕДКИЙ',
+    epic: 'ЭПИЧЕСКИЙ',
+    relic: 'РЕЛИКВИЯ',
+    legendary: 'ЛЕГЕНДАРНЫЙ'
+  };
+  return labels[tier] || tier;
+}
+
+function transmute(artifactId) {
+  const art = ARTIFACT_CATALOG.find(a => a.id === artifactId);
+  if (!art) return;
+
+  if (GS.ownedArtifacts.includes(artifactId)) {
+    toast('УЖЕ ПОЛУЧЕН', 'Артефакт уже находится в вашем арсенале.', 'warning');
+    return;
+  }
+
+  if (GS.player.emeralds < art.cost) {
+    document.getElementById('armory-alert').style.display = 'flex';
+    setTimeout(() => document.getElementById('armory-alert').style.display = 'none', 3000);
+    toast('НЕДОСТАТОЧНО РЕСУРСОВ', `Необходимо ${art.cost} изумрудов. Имеется: ${GS.player.emeralds}.`, 'warning');
+    return;
+  }
+
+  modifyEmeralds(-art.cost);
+  GS.ownedArtifacts.push(artifactId);
+
+  // Apply artifact effect
+  try {
+    art.effectFn(GS);
+  } catch(e) { console.warn('Ошибка применения артефакта:', e); }
+
+  saveState();
+  renderArmory();
+  document.getElementById('armory-emerald-count').textContent = GS.player.emeralds;
+
+  toast(`ТРАНСМУТАЦИЯ ЗАВЕРШЕНА`, `Артефакт "${art.name}" получен и активирован.`, 'success', 4000);
+
+  // Immediate effects
+  if (artifactId === 'temporal_crystal') {
+    modifyHP(30, 'Темпоральный Кристалл активирован.');
+  }
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+function renderProfile() {
+  const p = GS.player;
+  const initials = p.name.slice(0, 2).toUpperCase();
+
+  document.getElementById('profile-avatar').textContent = initials;
+  document.getElementById('profile-name').textContent = p.name;
+  document.getElementById('profile-name-input').value = p.name;
+
+  const classLabel = getClassLabel(p.level);
+  document.getElementById('profile-class').textContent = classLabel;
+
+  document.getElementById('profile-level-num').textContent = p.level;
+  document.getElementById('hdr-level').textContent = p.level;
+
+  const needed = XP_PER_LEVEL(p.level);
+  const pct = Math.min(100, (p.xp / needed) * 100);
+  document.getElementById('profile-xp-fill').style.width = pct + '%';
+  document.getElementById('profile-xp-label').textContent = `${p.xp} / ${needed} XP`;
+
+  document.getElementById('prof-total-missions').textContent = p.totalMissions;
+  document.getElementById('prof-failed-focus').textContent = p.failedFocus;
+  document.getElementById('prof-claimed-days').textContent = Object.values(GS.calendar).filter(d => d.claimed).length;
+  document.getElementById('prof-artifacts').textContent = GS.ownedArtifacts.length;
+}
+
+function getClassLabel(level) {
+  if (level < 5) return 'НОВОБРАНЕЦ — КЛАСС D';
+  if (level < 10) return 'РЕКРУТ — КЛАСС C';
+  if (level < 20) return 'ВЕТЕРАН — КЛАСС B';
+  if (level < 35) return 'ЭЛИТА — КЛАСС A';
+  if (level < 50) return 'КОМАНДОР — КЛАСС S';
+  return 'ЛЕГЕНДА — КЛАСС SS';
+}
+
+function saveProfile() {
+  const name = document.getElementById('profile-name-input').value.trim();
+  if (!name) { toast('ОШИБКА', 'Введите позывной.', 'warning'); return; }
+  GS.player.name = name;
+  saveState();
+  renderProfile();
+  toast('ДАННЫЕ ОБНОВЛЕНЫ', `Позывной изменён на "${name}".`, 'success');
+}
+
+function confirmReset() {
+  openModal('reset-modal');
+}
+
+function executeReset() {
+  localStorage.removeItem('aether_protocol_v2');
+  closeModal('reset-modal');
+  location.reload();
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+function init() {
+  loadState();
+  updateHeader();
+  renderMissions();
+  renderCalendar();
+  updateDashboardStats();
+  checkGuildDailyReset();
+
+  // Set today's date as default for mission deadline
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('m-deadline').value = today;
+
+  // Burnout warning check
+  if (GS.player.hp <= 20) {
+    document.body.classList.add('burnout-warning');
+  }
+
+  // Welcome toast
+  const lastSave = GS.lastSave;
+  if (!lastSave) {
+    toast('ТЕРМИНАЛ АКТИВИРОВАН', 'Добро пожаловать в AETHER PROTOCOL. Введите первую директиву.', 'info', 5000);
+  } else {
+    const diff = Date.now() - lastSave;
+    const hrs = Math.floor(diff / 3600000);
+    if (hrs > 0) {
+      toast('СЕАНС ВОССТАНОВЛЕН', `Отсутствовали ${hrs}ч. Статус: ${GS.player.hp} HP, ${GS.player.emeralds} изумрудов.`, 'info', 4000);
+    }
+  }
+
+  // Auto-save every 30s
+  setInterval(() => {
+    saveState();
+    updateHeader();
+  }, 30000);
+
+  console.log('%cAETHER PROTOCOL — Система инициализирована', 'color:#10B981;font-family:JetBrains Mono;font-size:14px;font-weight:bold');
+  console.log('%cv4.6 | Алхимический Терминал', 'color:#6366F1;font-family:JetBrains Mono;font-size:11px');
+}
+
+// Boot sequence
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
