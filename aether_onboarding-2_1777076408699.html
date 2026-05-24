@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aether Protocol — Онбординг</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@400;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06080a;
+    --surface: #0a0d0f;
+    --card: #0e1215;
+    --border: #1a2a20;
+    --green: #00ff41;
+    --green-dim: #00c030;
+    --green-dark: #002a10;
+    --purple: #8b5cf6;
+    --purple-dim: #6d3fd6;
+    --orange: #ff8c00;
+    --red: #ff2020;
+    --gold: #f5c842;
+    --teal: #00d4aa;
+    --text: #c8d8c8;
+    --muted: #4a6a4a;
+    --mono: 'Share Tech Mono', 'Courier New', monospace;
+    --body: 'Exo 2', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .terminal {
+    width: 100%;
+    max-width: 860px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(0,255,65,0.06), 0 0 120px rgba(0,0,0,0.8);
+  }
+
+  /* HEADER */
+  .t-header {
+    background: #050708;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .t-logo { display: flex; align-items: center; gap: 10px; }
+  .t-diamond {
+    width: 16px; height: 16px;
+    background: var(--green);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(0,255,65,0.5);
+  }
+  .t-name { color: var(--green); font-size: 12px; letter-spacing: 3px; }
+  .t-sub  { color: var(--muted); font-size: 9px; letter-spacing: 1.5px; margin-top: 2px; }
+
+  .t-stats { display: flex; align-items: center; gap: 18px; font-size: 11px; }
+  .hp-wrap { display: flex; align-items: center; gap: 6px; }
+  .hp-bar  { width: 80px; height: 4px; background: #1a0000; }
+  .hp-fill { height: 100%; background: var(--red); transition: width 1s; width: 15%; }
+  .sv { color: var(--green); font-weight: 700; font-size: 13px; }
+  .sl { color: var(--muted); font-size: 9px; letter-spacing: .5px; margin-top: 1px; }
+  .avatar {
+    width: 26px; height: 26px;
+    background: var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+  }
+
+  /* BODY */
+  .t-body { padding: 28px 24px; min-height: 420px; }
+
+  .progress-track { display: flex; align-items: center; gap: 6px; margin-bottom: 24px; }
+  .step-node {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--muted);
+    cursor: pointer; transition: all .2s;
+  }
+  .step-node.done { border-color: var(--green-dim); color: var(--green-dim); background: rgba(0,255,65,.05); }
+  .step-node.active { border-color: var(--green); color: var(--green); background: rgba(0,255,65,.1); }
+  .step-sep { flex: 1; height: 1px; background: var(--border); max-width: 36px; transition: background .3s; }
+  .step-sep.done { background: var(--green-dim); }
+
+  .slide { display: none; animation: fadeIn .3s ease; }
+  .slide.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-label {
+    color: var(--green); font-size: 10px; letter-spacing: 3px;
+    margin-bottom: 18px; text-transform: uppercase;
+    border-bottom: 1px solid var(--green-dark); padding-bottom: 7px;
+  }
+
+  .big-title {
+    font-family: var(--body); font-size: 26px; font-weight: 900;
+    color: #fff; line-height: 1.2; margin-bottom: 8px;
+  }
+  .hl-g { color: var(--green); }
+  .hl-p { color: var(--purple); }
+  .hl-o { color: var(--orange); }
+  .hl-r { color: var(--red); }
+  .hl-t { color: var(--teal); }
+
+  .desc { color: var(--muted); font-size: 12px; line-height: 1.9; margin-bottom: 20px; max-width: 600px; }
+
+  /* PILLARS */
+  .pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .pillar { border: 1px solid; border-radius: 2px; padding: 16px; background: rgba(0,0,0,.5); }
+  .pillar-g { border-color: var(--green-dark); }
+  .pillar-p { border-color: #3d2a70; }
+  .pillar-o { border-color: #3a2000; }
+  .p-num { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .p-head { font-size: 10px; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+  .p-body { font-size: 11px; color: var(--muted); line-height: 1.7; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tbtn {
+    padding: 10px 22px; font-family: var(--mono); font-size: 12px;
+    letter-spacing: 1.5px; cursor: pointer; border-radius: 2px;
+    text-transform: uppercase; transition: all .15s;
+    background: transparent;
+  }
+  .tbtn-primary { border: 1px solid var(--green); color: var(--green); }
+  .tbtn-primary:hover { background: var(--green); color: #000; }
+  .tbtn-primary:active { transform: scale(.97); }
+  .tbtn-ghost { border: 1px solid var(--muted); color: var(--muted); }
+  .tbtn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .tbtn-danger { border: 1px solid var(--red); color: var(--red); }
+  .tbtn-danger:hover { background: var(--red); color: #000; }
+
+  /* PROFILE */
+  .profile-block {
+    border: 1px solid var(--border); padding: 18px;
+    background: rgba(0,0,0,.5); border-radius: 2px; margin-bottom: 14px;
+  }
+  .profile-class { font-family: var(--body); font-size: 20px; font-weight: 900; color: var(--green); margin-bottom: 4px; }
+  .xp-bar-wrap { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+  .xp-bar-bg { flex: 1; height: 6px; background: #1a2a1a; }
+  .xp-bar-fill { height: 100%; background: var(--purple); width: 26%; transition: width 1.2s; }
+  .xp-lbl { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; margin-bottom: 16px; }
+  .sg-cell { background: rgba(0,0,0,.6); border: 1px solid var(--border); padding: 10px 6px; text-align: center; }
+  .sg-val { font-size: 18px; font-weight: 700; font-family: var(--body); }
+  .sg-lbl { font-size: 9px; color: var(--muted); letter-spacing: .5px; margin-top: 2px; text-transform: uppercase; }
+
+  /* MISSIONS */
+  .mission-card {
+    border: 1px solid var(--border); background: rgba(0,0,0,.5);
+    padding: 14px; border-radius: 2px; margin-bottom: 12px;
+  }
+  .mc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .mc-title { font-family: var(--body); font-size: 14px; font-weight: 700; color: #fff; }
+  .mc-xp {
+    color: var(--gold); font-size: 12px; font-weight: 700;
+    background: rgba(245,200,66,.08); border: 1px solid rgba(245,200,66,.25);
+    padding: 2px 9px; white-space: nowrap; flex-shrink: 0;
+  }
+  .mc-tags { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 8px; }
+  .mc-tag { font-size: 10px; padding: 2px 7px; letter-spacing: .5px; }
+  .tag-r { border: 1px solid #4a0000; color: var(--red); }
+  .tag-p { border: 1px solid #3d2a70; color: var(--purple); }
+  .tag-g { border: 1px solid var(--green-dark); color: var(--green-dim); }
+  .tag-o { border: 1px solid #3a2000; color: var(--orange); }
+  .tag-t { border: 1px solid #003a30; color: var(--teal); }
+  .mc-desc { font-size: 11px; color: var(--muted); line-height: 1.7; }
+
+  /* ARENA */
+  .arena-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 16px; }
+  .boss-card {
+    border: 1px solid; border-radius: 2px; padding: 12px;
+    background: rgba(0,0,0,.6); cursor: pointer; transition: all .2s;
+  }
+  .boss-card:hover { transform: translateY(-2px); }
+  .bc-d { border-color: #1a2a1a; } .bc-d .bc-name { color: var(--text); }
+  .bc-c { border-color: #003a30; } .bc-c .bc-name { color: var(--teal); }
+  .bc-b { border-color: #3d2a70; } .bc-b .bc-name { color: var(--purple); }
+  .bc-a { border-color: #3a2000; } .bc-a .bc-name { color: var(--orange); }
+  .bc-s { border-color: #4a0000; } .bc-s .bc-name { color: var(--red); }
+  .bc-rank { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
+  .bc-name { font-family: var(--body); font-size: 11px; font-weight: 700; margin-bottom: 7px; line-height: 1.3; }
+  .bc-stats { font-size: 10px; color: var(--muted); line-height: 1.8; }
+  .bc-btn {
+    margin-top: 9px; width: 100%; padding: 5px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+    cursor: pointer; background: transparent; border: 1px solid var(--red);
+    color: var(--red); transition: all .15s;
+  }
+  .bc-btn:hover { background: var(--red); color: #000; }
+
+  .boss-world {
+    border: 1px solid rgba(255,32,32,.4); background: rgba(40,0,0,.4);
+    padding: 16px; border-radius: 2px; margin-bottom: 16px;
+  }
+  .bw-head { color: var(--red); font-size: 9px; letter-spacing: 3px; margin-bottom: 10px; text-transform: uppercase; }
+  .bw-name { font-family: var(--body); font-size: 17px; font-weight: 900; color: #fff; margin-bottom: 3px; }
+  .bw-sub { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .bw-hp-bar { height: 8px; background: #1a0000; overflow: hidden; }
+  .bw-hp-fill { height: 100%; background: var(--red); width: 99%; transition: width 1.4s; }
+  .bw-quota { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  /* SHOP */
+  .shop-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .shop-card { border: 1px solid var(--border); padding: 14px; background: rgba(0,0,0,.5); border-radius: 2px; }
+  .sc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
+  .sc-name { font-family: var(--body); font-size: 13px; font-weight: 700; color: #fff; }
+  .sc-rarity { font-size: 9px; padding: 2px 6px; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; }
+  .r-common { border: 1px solid var(--border); color: var(--muted); }
+  .r-rare   { border: 1px solid #003a70; color: #5599ff; }
+  .r-epic   { border: 1px solid #3d2a70; color: var(--purple); }
+  .r-relic  { border: 1px solid #3a2000; color: var(--orange); }
+  .r-legend { border: 1px solid #4a0000; color: var(--red); }
+  .sc-desc { font-size: 10px; color: var(--muted); line-height: 1.7; margin-bottom: 9px; }
+  .sc-bonus {
+    font-size: 11px; color: var(--teal);
+    background: rgba(0,212,170,.06); border: 1px solid rgba(0,212,170,.18);
+    padding: 6px 9px; margin-bottom: 10px; line-height: 1.5;
+  }
+  .sc-foot { display: flex; justify-content: space-between; align-items: center; }
+  .sc-price { color: var(--teal); font-weight: 700; font-size: 13px; }
+  .sc-owned { font-size: 10px; color: var(--green); letter-spacing: 1px; }
+  .sc-buy {
+    padding: 5px 12px; font-family: var(--mono); font-size: 10px;
+    cursor: pointer; background: transparent; letter-spacing: 1px;
+    border: 1px solid var(--green-dim); color: var(--green-dim); transition: all .15s;
+  }
+  .sc-buy:hover { background: var(--green); color: #000; border-color: var(--green); }
+
+  /* FINAL */
+  .terminal-log {
+    font-family: var(--mono); font-size: 12px; color: var(--green);
+    line-height: 2.2; margin-bottom: 22px;
+  }
+  .log-line { opacity: 0; animation: logIn .4s ease forwards; }
+  .log-line:nth-child(1) { animation-delay: .1s; }
+  .log-line:nth-child(2) { animation-delay: .6s; }
+  .log-line:nth-child(3) { animation-delay: 1.1s; }
+  .log-line:nth-child(4) { animation-delay: 1.6s; color: var(--gold); }
+  @keyframes logIn { to { opacity: 1; } }
+
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .final-btns { display: flex; flex-direction: column; gap: 8px; max-width: 300px; }
+  .final-btns .tbtn { width: 100%; text-align: center; padding: 12px; }
+
+  /* scanline effect */
+  .terminal::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 4px);
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<div class="terminal">
+  <!-- HEADER -->
+  <div class="t-header">
+    <div class="t-logo">
+      <div class="t-diamond"></div>
+      <div>
+        <div class="t-name">AETHER PROTOCOL</div>
+        <div class="t-sub">V5.0 — АЛХИМИЧЕСКИЙ ТЕРМИНАЛ</div>
+      </div>
+    </div>
+    <div class="t-stats">
+      <div class="hp-wrap">
+        <div style="font-size:10px;color:var(--muted);margin-right:2px">ОЗ</div>
+        <div class="hp-bar"><div class="hp-fill"></div></div>
+        <span style="color:var(--red);font-size:11px">18/120</span>
+      </div>
+      <div style="text-align:center">
+        <div class="sv">3</div>
+        <div class="sl">УРВ</div>
+      </div>
+      <div style="text-align:center">
+        <div class="sv" style="color:var(--teal)">22</div>
+        <div class="sl">ИЗУ</div>
+      </div>
+      <div style="text-align:center">
+        <div class="sv" style="color:var(--orange)">0 ДН</div>
+        <div class="sl">СЕРИЯ</div>
+      </div>
+      <div class="avatar">N</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="t-body">
+    <div class="progress-track" id="progTrack"></div>
+
+    <!-- SLIDE 0: Welcome -->
+    <div class="slide active" id="s0">
+      <div class="section-label">// инициализация протокола</div>
+      <div class="big-title">Добро пожаловать в<br><span class="hl-g">Aether Protocol</span></div>
+      <p class="desc">Это не таск-менеджер. Это боевая система продуктивности. Создавай миссии — зарабатывай Изумруды — сражайся с боссами на Арене. Каждое действие имеет вес.</p>
+      <div class="pillars">
+        <div class="pillar pillar-g">
+          <div class="p-num hl-g">01</div>
+          <div class="p-head" style="color:var(--green)">Миссии</div>
+          <div class="p-body">Создавай задачи, выполняй — получай ОП и Изумруды за каждую победу</div>
+        </div>
+        <div class="pillar pillar-p">
+          <div class="p-num hl-p">02</div>
+          <div class="p-head" style="color:var(--purple)">Артефакты</div>
+          <div class="p-body">Трать Изумруды в Лаборатории на силу. Артефакты меняют правила игры</div>
+        </div>
+        <div class="pillar pillar-o">
+          <div class="p-num hl-o">03</div>
+          <div class="p-head" style="color:var(--orange)">Арена</div>
+          <div class="p-body">Бросай вызов боссам. От Ранга D до S — каждый уровень жёстче предыдущего</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="tbtn tbtn-primary" onclick="go(1)">НАЧАТЬ ИНИЦИАЛИЗАЦИЮ &gt;</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 1: Profile -->
+    <div class="slide" id="s1">
+      <div class="section-label">// шаг 01 — профиль алхимика</div>
+      <div class="big-title" style="font-size:20px;margin-bottom:14px">Твой профиль — твоя боевая карта</div>
+      <div class="profile-block">
+        <div class="profile-class">НОВИЧОК-АЛХИМИК</div>
+        <div style="color:var(--orange);font-size:11px;letter-spacing:2px">РАНГ — <span style="color:var(--purple)">АДЕПТ</span></div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-bg"><div class="xp-bar-fill"></div></div>
+          <div class="xp-lbl">90 / 350 ОП</div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="sg-cell"><div class="sg-val" style="color:var(--green)">3</div><div class="sg-lbl">Миссии</div></div>
+        <div class="sg-cell"><div class="sg-val" style="color:var(--purple)">410</div><div class="sg-lbl">Всего ОП</div></div>
+        <div class="sg-cell"><div class="sg-val" style="color:var(--orange)">0 ДН</div><div class="sg-lbl">Серия</div></div>
+        <div class="sg-cell"><div class="sg-val">3</div><div class="sg-lbl">Фокус</div></div>
+        <div class="sg-cell"><div class="sg-val" style="color:var(--red)">1</div><div class="sg-lbl">Арена</div></div>
+        <div class="sg-cell"><div class="sg-val" style="color:var(--teal)">22</div><div class="sg-lbl">ИЗУ</div></div>
+      </div>
+      <p class="desc" style="margin-bottom:18px">Каждая выполненная миссия обновляет этот экран. Серия дней подряд даёт бонус к ОП. Достигни Ранга S — и Левиафан лично примет вызов.</p>
+      <div class="btn-row">
+        <button class="tbtn tbtn-ghost" onclick="go(0)">&lt; НАЗАД</button>
+        <button class="tbtn tbtn-primary" onclick="go(2)">ДАЛЕЕ: МИССИИ &gt;</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Missions -->
+    <div class="slide" id="s2">
+      <div class="section-label">// шаг 02 — система миссий</div>
+      <div class="big-title" style="font-size:20px;margin-bottom:14px">Миссии — это твой урон по боссам</div>
+      <div class="mission-card">
+        <div class="mc-head">
+          <div class="mc-title">Запустить MVP без инвестора</div>
+          <div class="mc-xp">+280 ИЗУ</div>
+        </div>
+        <div class="mc-tags">
+          <span class="mc-tag tag-r">РАНГ A</span>
+          <span class="mc-tag tag-p">СОЛО</span>
+          <span class="mc-tag tag-g">48 Ч</span>
+          <span class="mc-tag tag-o">ПРОДУКТ</span>
+        </div>
+        <div class="mc-desc">Создать рабочий прототип без внешнего финансирования. Победа = первый платный пользователь.</div>
+      </div>
+      <div class="mission-card" style="border-color:#3d2a70;opacity:.75">
+        <div class="mc-head">
+          <div class="mc-title">Провести 5 кастдев-интервью</div>
+          <div class="mc-xp">+120 ИЗУ</div>
+        </div>
+        <div class="mc-tags">
+          <span class="mc-tag tag-p">РАНГ B</span>
+          <span class="mc-tag tag-t">КОМАНДА</span>
+          <span class="mc-tag tag-g">НЕДЕЛЯ</span>
+        </div>
+        <div class="mc-desc">Поговорить с реальными пользователями. Задокументировать боли. Синтезировать инсайты.</div>
+      </div>
+      <p class="desc" style="margin-bottom:18px">Чем сложнее миссия и жёстче дедлайн — тем больше <span class="hl-t">Изумрудов</span>. Изумруды = валюта Арены и Лаборатории.</p>
+      <div class="btn-row">
+        <button class="tbtn tbtn-ghost" onclick="go(1)">&lt; НАЗАД</button>
+        <button class="tbtn tbtn-primary" onclick="go(3)">ДАЛЕЕ: АРЕНА &gt;</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Arena -->
+    <div class="slide" id="s3">
+      <div class="section-label">// шаг 03 — тактическая арена</div>
+      <div class="big-title" style="font-size:20px;margin-bottom:12px">Выбери противника — начни бой</div>
+      <p class="desc" style="margin-bottom:14px">Трать Изумруды, чтобы бросить вызов боссу. Каждый ранг сложнее. Победа даёт ОП, ачивки и открывает новых врагов.</p>
+      <div class="arena-grid">
+        <div class="boss-card bc-d">
+          <div class="bc-rank">РАНГ D</div>
+          <div class="bc-name">Призрак Эфира</div>
+          <div class="bc-stats">ОЗ: 80<br>АТК: 10<br>Цена: 20 ИЗУ</div>
+          <button class="bc-btn">ВЫЗОВ</button>
+        </div>
+        <div class="boss-card bc-c">
+          <div class="bc-rank">РАНГ C</div>
+          <div class="bc-name">Ползун Пустоты</div>
+          <div class="bc-stats">ОЗ: 140<br>АТК: 18<br>Цена: 50 ИЗУ</div>
+          <button class="bc-btn">ВЫЗОВ</button>
+        </div>
+        <div class="boss-card bc-b">
+          <div class="bc-rank">РАНГ B</div>
+          <div class="bc-name">Теневой Титан</div>
+          <div class="bc-stats">ОЗ: 220<br>АТК: 28<br>Цена: 100 ИЗУ</div>
+          <button class="bc-btn">ВЫЗОВ</button>
+        </div>
+        <div class="boss-card bc-a">
+          <div class="bc-rank">РАНГ A</div>
+          <div class="bc-name">Страж Пустоты</div>
+          <div class="bc-stats">ОЗ: 320<br>АТК: 40<br>Цена: 200 ИЗУ</div>
+          <button class="bc-btn">ВЫЗОВ</button>
+        </div>
+        <div class="boss-card bc-s">
+          <div class="bc-rank">РАНГ S</div>
+          <div class="bc-name">Осколок Левиафана</div>
+          <div class="bc-stats">ОЗ: 500<br>АТК: 60<br>Цена: 500 ИЗУ</div>
+          <button class="bc-btn">ВЫЗОВ</button>
+        </div>
+      </div>
+      <div class="boss-world">
+        <div class="bw-head">// мировой босс — активен сейчас</div>
+        <div class="bw-name">ЛЕВИАФАН-IX</div>
+        <div class="bw-sub">Общий враг всех алхимиков · весь сервер атакует совместно</div>
+        <div class="bw-hp-bar"><div class="bw-hp-fill" style="width:98.95%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:5px">
+          <span>9 895 / 10 000 HP</span><span style="color:var(--red)">КРИТИЧЕСКИ БЛИЗКО</span>
+        </div>
+        <div class="bw-quota">Дневная квота: <span style="color:var(--green)">0/200</span> урона · твои миссии = урон по Левиафану</div>
+      </div>
+      <div class="btn-row">
+        <button class="tbtn tbtn-ghost" onclick="go(2)">&lt; НАЗАД</button>
+        <button class="tbtn tbtn-primary" onclick="go(4)">ДАЛЕЕ: ЛАБОРАТОРИЯ &gt;</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Shop -->
+    <div class="slide" id="s4">
+      <div class="section-label">// шаг 04 — алхимическая лаборатория</div>
+      <div class="big-title" style="font-size:20px;margin-bottom:12px">Артефакты меняют правила боя</div>
+      <div class="shop-grid">
+        <div class="shop-card" style="border-color:#1a2a3a;background:rgba(0,8,20,.6)">
+          <div class="sc-head">
+            <div class="sc-name">Осколок Эфира</div>
+            <div class="sc-rarity r-common">ОБЫЧНЫЙ</div>
+          </div>
+          <div class="sc-desc">Фрагмент чистой эфирной энергии, всё ещё пульсирующий древним резонансом.</div>
+          <div class="sc-bonus">+5% ОП за все миссии</div>
+          <div class="sc-foot">
+            <div class="sc-price">50 ИЗУ</div>
+            <div class="sc-owned">ПОЛУЧЕН ✓</div>
+          </div>
+        </div>
+        <div class="shop-card">
+          <div class="sc-head">
+            <div class="sc-name">Линза Пустоты</div>
+            <div class="sc-rarity r-rare">РЕДКИЙ</div>
+          </div>
+          <div class="sc-desc">Кристаллизованная тьма, изгибающая законы вероятности в твою пользу.</div>
+          <div class="sc-bonus">+10% изумруды, +5 защита серии</div>
+          <div class="sc-foot">
+            <div class="sc-price" style="color:var(--teal)">120 ИЗУ</div>
+            <button class="sc-buy">ПОЛУЧИТЬ</button>
+          </div>
+        </div>
+        <div class="shop-card" style="border-color:#3d2a70">
+          <div class="sc-head">
+            <div class="sc-name">Горнило Маны</div>
+            <div class="sc-rarity r-epic">ЭПИК</div>
+          </div>
+          <div class="sc-desc">Перегоняет сырой магический потенциал в пригодную для боя форму.</div>
+          <div class="sc-bonus">Выброс Маны действует на 2 дня дольше</div>
+          <div class="sc-foot">
+            <div class="sc-price" style="color:var(--purple)">320 ИЗУ</div>
+            <button class="sc-buy" style="border-color:var(--purple);color:var(--purple)">ПОЛУЧИТЬ</button>
+          </div>
+        </div>
+        <div class="shop-card" style="border-color:#3a2000">
+          <div class="sc-head">
+            <div class="sc-name">Хроно-Печать</div>
+            <div class="sc-rarity r-relic">РЕЛИКВИЯ</div>
+          </div>
+          <div class="sc-desc">Останавливает время на одно мгновение. Достаточно, чтобы изменить всё.</div>
+          <div class="sc-bonus">+30% ОП, пропустить 1 штраф дедлайна в день</div>
+          <div class="sc-foot">
+            <div class="sc-price" style="color:var(--orange)">500 ИЗУ</div>
+            <button class="sc-buy" style="border-color:var(--orange);color:var(--orange)">ПОЛУЧИТЬ</button>
+          </div>
+        </div>
+        <div class="shop-card" style="border-color:#4a0000">
+          <div class="sc-head">
+            <div class="sc-name">Ядро Левиафана</div>
+            <div class="sc-rarity r-legend">ЛЕГЕНД.</div>
+          </div>
+          <div class="sc-desc">Бьющееся сердце, вырванное из самого мирового босса. Абсолютная сила.</div>
+          <div class="sc-bonus">+50% все характеристики, разблокирует резонанс Левиафана</div>
+          <div class="sc-foot">
+            <div class="sc-price" style="color:var(--red)">1200 ИЗУ</div>
+            <button class="sc-buy" style="border-color:var(--red);color:var(--red)">ПОЛУЧИТЬ</button>
+          </div>
+        </div>
+        <div class="shop-card">
+          <div class="sc-head">
+            <div class="sc-name">Призрачный Щит</div>
+            <div class="sc-rarity r-relic">РЕЛИКВИЯ</div>
+          </div>
+          <div class="sc-desc">Невидимый барьер, поглощающий следующий смертельный удар по серии.</div>
+          <div class="sc-bonus">+3 щита, восстановление 1 щита в день</div>
+          <div class="sc-foot">
+            <div class="sc-price" style="color:var(--orange)">600 ИЗУ</div>
+            <button class="sc-buy" style="border-color:var(--orange);color:var(--orange)">ПОЛУЧИТЬ</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="tbtn tbtn-ghost" onclick="go(3)">&lt; НАЗАД</button>
+        <button class="tbtn tbtn-primary" onclick="go(5)">ФИНАЛ &gt;</button>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Final -->
+    <div class="slide" id="s5">
+      <div class="section-label">// протокол активирован</div>
+      <div class="terminal-log" id="termLog">
+        <div class="log-line"><span class="blink">&gt;</span> АЛХИМИК ЗАРЕГИСТРИРОВАН В СИСТЕМЕ...</div>
+        <div class="log-line"><span class="blink">&gt;</span> ЛЕВИАФАН-IX ОБНАРУЖЕН. HP: 9895/10000...</div>
+        <div class="log-line"><span class="blink">&gt;</span> АРЕНА И ЛАБОРАТОРИЯ РАЗБЛОКИРОВАНЫ...</div>
+        <div class="log-line"><span class="blink">&gt;</span> <span style="color:var(--gold)">СТАТУС: ГОТОВ К БОЮ ✓</span></div>
+      </div>
+      <div class="big-title" style="margin-bottom:10px">Всё. Ты в системе.<br><span class="hl-g">Пора наносить урон.</span></div>
+      <p class="desc" style="margin-bottom:22px">Создай первую миссию → заработай Изумруды → брось вызов боссу на Арене. <span class="hl-r">Левиафан не ждёт.</span></p>
+      <div class="final-btns">
+        <button class="tbtn tbtn-primary" onclick="alert('Переход к созданию миссии!')">СОЗДАТЬ ПЕРВУЮ МИССИЮ &gt;</button>
+        <button class="tbtn tbtn-danger" onclick="alert('Переход на Арену!')">СРАЗУ НА АРЕНУ &gt;</button>
+        <button class="tbtn tbtn-ghost" style="font-size:11px" onclick="go(0)">ПРОЙТИ ЕЩЁ РАЗ</button>
+      </div>
+    </div>
+
+  </div><!-- /t-body -->
+</div><!-- /terminal -->
+
+<script>
+  let cur = 0;
+  const total = 6;
+
+  function renderTrack() {
+    const t = document.getElementById('progTrack');
+    t.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      if (i > 0) {
+        const sep = document.createElement('div');
+        sep.className = 'step-sep' + (i <= cur ? ' done' : '');
+        t.appendChild(sep);
+      }
+      const node = document.createElement('div');
+      node.className = 'step-node' + (i < cur ? ' done' : i === cur ? ' active' : '');
+      node.textContent = i < cur ? '✓' : (i + 1);
+      if (i < cur) { const idx = i; node.onclick = () => go(idx); }
+      t.appendChild(node);
+    }
+  }
+
+  function go(n) {
+    document.getElementById('s' + cur).classList.remove('active');
+    cur = n;
+    document.getElementById('s' + cur).classList.add('active');
+    renderTrack();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  renderTrack();
+</script>
+</body>
+</html>

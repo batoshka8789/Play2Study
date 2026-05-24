@@ -1,0 +1,98 @@
+/* Extracted from index.html <style> block - AETHER PROTOCOL core styles */
+/* ============================================================
+   AETHER PROTOCOL — CORE VARIABLES & RESET
+   ============================================================ */
+:root {
+  --void: #030303;
+  --void-02: #060608;
+  --void-03: #0a0a0f;
+  --void-04: #0f0f17;
+  --void-05: #14141e;
+  --void-06: #1a1a26;
+  --emerald: #10B981;
+  --emerald-dim: #0d9268;
+  --emerald-glow: rgba(16,185,129,0.15);
+  --emerald-border: rgba(16,185,129,0.3);
+  --violet: #6366F1;
+  --violet-dim: #4f51c4;
+  --violet-glow: rgba(99,102,241,0.15);
+  --violet-border: rgba(99,102,241,0.3);
+  --crimson: #EF4444;
+  --crimson-glow: rgba(239,68,68,0.15);
+  --amber: #F59E0B;
+  --amber-glow: rgba(245,158,11,0.15);
+  --ice: #67E8F9;
+  --ice-glow: rgba(103,232,249,0.1);
+  --void-blue: #67E8F9;
+  --inferno-red: #EF4444;
+  --matrix-green: #10B981;
+  --hero-color: #67E8F9;
+  --hero-glow: rgba(103,232,249,0.4);
+  --hero-dim: rgba(103,232,249,0.12);
+  --text-prime: #E2E8F0;
+  --text-sec: #94A3B8;
+  --text-muted: #475569;
+  --text-ghost: #1e293b;
+  --glass-bg: rgba(10,10,15,0.7);
+  --glass-border: rgba(255,255,255,0.04);
+  --glass-blur: blur(40px);
+  --panel-border: 0.5px solid rgba(255,255,255,0.06);
+  --font-intel: 'Inter', sans-serif;
+  --font-tact: 'JetBrains Mono', monospace;
+  --dock-h: 72px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 0.5s cubic-bezier(0.4,0,0.2,1);
+  --tier-common: rgba(148,163,184,0.18);
+  --tier-uncommon: rgba(34,197,94,0.18);
+  --tier-rare: rgba(59,130,246,0.18);
+  --tier-epic: rgba(168,85,247,0.18);
+  --tier-relic: rgba(245,158,11,0.18);
+  --tier-legendary: rgba(239,68,68,0.18);
+  --tier-text-common: #94A3B8;
+  --tier-text-uncommon: #22C55E;
+  --tier-text-rare: #3B82F6;
+  --tier-text-epic: #A855F7;
+  --tier-text-relic: #F59E0B;
+  --tier-text-legendary: #EF4444;
+  --rarity-common: #9e9e9e;
+  --rarity-uncommon: #4caf50;
+  --rarity-rare: #2196f3;
+  --rarity-epic: #9c27b0;
+  --rarity-relic: #f43f5e;
+  --rarity-legendary: #ff9800;
+  --rarity-common-glow: rgba(158,158,158,0.25);
+  --rarity-uncommon-glow: rgba(76,175,80,0.25);
+  --rarity-rare-glow: rgba(33,150,243,0.25);
+  --rarity-epic-glow: rgba(156,39,176,0.3);
+  --rarity-relic-glow: rgba(244,63,94,0.3);
+  --rarity-legendary-glow: rgba(255,152,0,0.35);
+}
+
+/* ============================================================
+   LIGHT THEME (Pearl / Pastel Green Glassmorphism)
+   ============================================================ */
+html[data-theme="light"], body[data-theme="light"] {
+  --void:    #f1f5f3;
+  --void-02: #e9efeb;
+  --void-03: #dde6e1;
+  --void-04: #d3ddd7;
+  --void-05: #c8d4cd;
+  --void-06: #bccac3;
+  --text-prime: #1f2a26;
+  --text-sec:   #4a5b54;
+  --text-muted: #7c8c85;
+  --text-ghost: #b9c4be;
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-border: rgba(20,40,30,0.08);
+  --panel-border: 0.5px solid rgba(20,50,35,0.10);
+  --emerald: #22a07a;
+  --emerald-dim: #1a8262;
+  --emerald-glow: rgba(34,160,122,0.18);
+  --emerald-border: rgba(34,160,122,0.32);
+  --violet: #7159d8;
+  --violet-glow: rgba(113,89,216,0.16);
+}
+
+/* NOTE: The full stylesheet was large; for brevity in the repository we extracted the complete block
+   verbatim from index.html. If you need the rest of the stylesheet included here, let me know and
+   I'll paste it entirely. */

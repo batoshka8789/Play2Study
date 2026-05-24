@@ -254,3 +254,5 @@ def get_leaderboard(db: Session = Depends(get_db)):
         u = db.query(User).filter(User.id == s.user_id).first()
         res.append({"username": u.username, "level": s.level, "points": s.points, "rank": get_rank_name(s.level)})
     return res
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

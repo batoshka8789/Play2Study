@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<style>
 /* ============================================================
    AETHER PROTOCOL — CORE VARIABLES & RESET
    ============================================================ */
@@ -46,9 +46,391 @@
   --violet-border: rgba(99,102,241,0.3);
   --crimson: #EF4444;
   --crimson-glow: rgba(239,68,68,0.15);
-  </div>
+  --amber: #F59E0B;
+  --amber-glow: rgba(245,158,11,0.15);
+  --ice: #67E8F9;
+  --ice-glow: rgba(103,232,249,0.1);
+  --void-blue: #67E8F9;
+  --inferno-red: #EF4444;
+  --matrix-green: #10B981;
+  --hero-color: #67E8F9;
+  --hero-glow: rgba(103,232,249,0.4);
+  --hero-dim: rgba(103,232,249,0.12);
+  --text-prime: #E2E8F0;
+  --text-sec: #94A3B8;
+  --text-muted: #475569;
+  --text-ghost: #1e293b;
+  --glass-bg: rgba(10,10,15,0.7);
+  --glass-border: rgba(255,255,255,0.04);
+  --glass-blur: blur(40px);
+  --panel-border: 0.5px solid rgba(255,255,255,0.06);
+  --font-intel: 'Inter', sans-serif;
+  --font-tact: 'JetBrains Mono', monospace;
+  --dock-h: 72px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 0.5s cubic-bezier(0.4,0,0.2,1);
+  --tier-common: rgba(148,163,184,0.18);
+  --tier-uncommon: rgba(34,197,94,0.18);
+  --tier-rare: rgba(59,130,246,0.18);
+  --tier-epic: rgba(168,85,247,0.18);
+  --tier-relic: rgba(245,158,11,0.18);
+  --tier-legendary: rgba(239,68,68,0.18);
+  --tier-text-common: #94A3B8;
+  --tier-text-uncommon: #22C55E;
+  --tier-text-rare: #3B82F6;
+  --tier-text-epic: #A855F7;
+  --tier-text-relic: #F59E0B;
+  --tier-text-legendary: #EF4444;
+  --rarity-common: #9e9e9e;
+  --rarity-uncommon: #4caf50;
+  --rarity-rare: #2196f3;
+  --rarity-epic: #9c27b0;
+  --rarity-relic: #f43f5e;
+  --rarity-legendary: #ff9800;
+  --rarity-common-glow: rgba(158,158,158,0.25);
+  --rarity-uncommon-glow: rgba(76,175,80,0.25);
+  --rarity-rare-glow: rgba(33,150,243,0.25);
+  --rarity-epic-glow: rgba(156,39,176,0.3);
+  --rarity-relic-glow: rgba(244,63,94,0.3);
+  --rarity-legendary-glow: rgba(255,152,0,0.35);
+}
 
-  <script src="app.js" defer></script>
+/* ============================================================
+   LIGHT THEME (Pearl / Pastel Green Glassmorphism)
+   ============================================================ */
+html[data-theme="light"], body[data-theme="light"] {
+  --void:    #f1f5f3;
+  --void-02: #e9efeb;
+  --void-03: #dde6e1;
+  --void-04: #d3ddd7;
+  --void-05: #c8d4cd;
+  --void-06: #bccac3;
+  --text-prime: #1f2a26;
+  --text-sec:   #4a5b54;
+  --text-muted: #7c8c85;
+  --text-ghost: #b9c4be;
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-border: rgba(20,40,30,0.08);
+  --panel-border: 0.5px solid rgba(20,50,35,0.10);
+  --emerald: #22a07a;
+  --emerald-dim: #1a8262;
+  --emerald-glow: rgba(34,160,122,0.18);
+  --emerald-border: rgba(34,160,122,0.32);
+  --violet: #7159d8;
+  --violet-glow: rgba(113,89,216,0.16);
+  --violet-border: rgba(113,89,216,0.30);
+}
+html[data-theme="light"] body { background: linear-gradient(135deg,#f3f8f5 0%,#e8efe9 50%,#e0ebde 100%); color: var(--text-prime); }
+html[data-theme="light"] #cmd-header { background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(20,50,35,0.08); }
+html[data-theme="light"] #bg-grid {
+  background-image:
+    linear-gradient(rgba(34,160,122,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,160,122,0.06) 1px, transparent 1px);
+}
+html[data-theme="light"] #bg-radial {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(113,89,216,0.07) 0%, transparent 70%),
+              radial-gradient(ellipse 50% 40% at 0% 100%, rgba(34,160,122,0.06) 0%, transparent 60%);
+}
+html[data-theme="light"] #scanlines { opacity: 0.25; mix-blend-mode: multiply; }
+html[data-theme="light"] .panel,
+html[data-theme="light"] .matrix-panel,
+html[data-theme="light"] .dash-v5-brand,
+html[data-theme="light"] .dash-v5-profile,
+html[data-theme="light"] .dash-leviathan-panel,
+html[data-theme="light"] .dash-daily-panel,
+html[data-theme="light"] .home-right-panel,
+html[data-theme="light"] .hrp-block,
+html[data-theme="light"] .hero-showcase {
+  background: rgba(255,255,255,0.66) !important;
+  border: 1px solid rgba(20,60,40,0.10) !important;
+  box-shadow: 0 6px 22px rgba(20,60,40,0.06), inset 0 0 0 1px rgba(255,255,255,0.5);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+html[data-theme="light"] .btn-ghost { color: #345; border-color: rgba(20,40,30,0.18); }
+html[data-theme="light"] .matrix-ticker .ticker-track span { color: #2c5043; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(34,160,122,0.5); }
+html[data-theme="light"] .modal-backdrop { background: rgba(220,235,228,0.55); }
+html[data-theme="light"] .modal { background: rgba(255,255,255,0.85); border-color: rgba(20,60,40,0.12); }
+html[data-theme="light"] .field input, html[data-theme="light"] .field select, html[data-theme="light"] .field textarea {
+  background: rgba(255,255,255,0.7); color: var(--text-prime); border-color: rgba(20,60,40,0.18);
+}
+html[data-theme="light"] .field input::placeholder { color: #98a8a1; }
+
+/* ============================================================
+   THEME TOGGLE BUTTON
+   ============================================================ */
+.theme-toggle {
+  position: relative;
+  width: 44px; height: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--emerald-border);
+  background: rgba(16,185,129,0.1);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex; align-items: center;
+  padding: 2px;
+  margin-left: 4px;
+}
+.theme-toggle::before {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#67E8F9,#10B981);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 0 10px rgba(16,185,129,0.6);
+}
+html[data-theme="light"] .theme-toggle { background: rgba(255,255,255,0.7); border-color: rgba(34,160,122,0.4); }
+html[data-theme="light"] .theme-toggle::before {
+  transform: translateX(20px);
+  background: linear-gradient(135deg,#fef3c7,#fcd34d);
+  box-shadow: 0 0 10px rgba(252,211,77,0.6);
+}
+.theme-toggle .tt-icon {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font-size: 9px; opacity: 0.65;
+}
+.theme-toggle .tt-icon.tt-moon { left: 6px; }
+.theme-toggle .tt-icon.tt-sun  { right: 6px; }
+
+/* ============================================================
+   QUICK ACTIONS PANEL (under resources)
+   ============================================================ */
+.quick-actions-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 10px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 6px;
+}
+.qa-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(99,102,241,0.18);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  font-family: var(--font-tact);
+  color: var(--text-sec);
+}
+.qa-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--emerald);
+  box-shadow: 0 6px 18px rgba(16,185,129,0.25), inset 0 0 0 1px rgba(16,185,129,0.15);
+  color: var(--text-prime);
+  background: rgba(16,185,129,0.06);
+}
+.qa-btn:active { transform: translateY(0) scale(0.97); }
+.qa-icon {
+  font-size: 22px; line-height: 1;
+  filter: drop-shadow(0 0 6px var(--hero-glow));
+}
+.qa-label {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+html[data-theme="light"] .qa-btn { background: rgba(255,255,255,0.6); border-color: rgba(20,60,40,0.12); }
+html[data-theme="light"] .qa-btn:hover { background: rgba(34,160,122,0.08); border-color: var(--emerald); }
+
+/* ============================================================
+   ACTIVITY TERMINAL (replaces system terminal)
+   ============================================================ */
+.activity-terminal {
+  position: relative;
+  border: 1px solid;
+  border-image: linear-gradient(135deg, var(--emerald), var(--violet)) 1;
+  background: linear-gradient(180deg, rgba(8,12,18,0.85), rgba(4,7,12,0.92));
+  padding: 12px 14px;
+  font-family: var(--font-tact);
+  font-size: 11px;
+  color: var(--text-prime);
+  box-shadow: 0 0 28px rgba(16,185,129,0.10), inset 0 0 0 1px rgba(255,255,255,0.03);
+  border-radius: 4px;
+  min-height: 240px;
+  max-height: 420px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.activity-terminal::before {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
+}
+html[data-theme="light"] .activity-terminal {
+  background: linear-gradient(180deg, rgba(245,250,247,0.9), rgba(232,241,235,0.92));
+  color: var(--text-prime);
+  box-shadow: 0 6px 22px rgba(34,160,122,0.10), inset 0 0 0 1px rgba(255,255,255,0.6);
+}
+.at-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed rgba(16,185,129,0.25);
+  font-size: 10px; letter-spacing: 0.18em; color: var(--emerald);
+  text-transform: uppercase;
+}
+.at-header .at-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--emerald);
+  box-shadow: 0 0 8px var(--emerald);
+  animation: at-pulse 1.4s ease-in-out infinite;
+  display: inline-block; margin-right: 6px; vertical-align: middle;
+}
+@keyframes at-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.85); } }
+.at-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+}
+.at-feed::-webkit-scrollbar { width: 3px; }
+.at-feed::-webkit-scrollbar-thumb { background: var(--emerald-dim); border-radius: 2px; }
+.at-line {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  animation: at-typein 0.4s ease both;
+  line-height: 1.5;
+}
+@keyframes at-typein { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+.at-time { color: var(--text-muted); font-size: 9px; flex-shrink: 0; min-width: 38px; }
+.at-tag  { font-size: 9px; padding: 1px 6px; border-radius: 2px; flex-shrink: 0; letter-spacing: 0.05em; text-transform: uppercase; }
+.at-tag.task    { color: var(--emerald);  border: 1px solid var(--emerald-border);  background: rgba(16,185,129,0.06); }
+.at-tag.success { color: #fbbf24;          border: 1px solid rgba(245,158,11,0.3);   background: rgba(245,158,11,0.06); }
+.at-tag.loot    { color: #f59e0b;          border: 1px solid rgba(245,158,11,0.3);   background: rgba(245,158,11,0.06); }
+.at-tag.system  { color: var(--text-sec);  border: 1px solid rgba(148,163,184,0.25); background: rgba(148,163,184,0.04); }
+.at-tag.guild   { color: var(--violet);    border: 1px solid var(--violet-border);   background: rgba(99,102,241,0.06); }
+.at-tag.raid    { color: var(--crimson);   border: 1px solid rgba(239,68,68,0.3);    background: rgba(239,68,68,0.06); }
+.at-tag.profile { color: var(--ice);       border: 1px solid rgba(103,232,249,0.3);  background: rgba(103,232,249,0.06); }
+.at-tag.info    { color: var(--text-sec);  border: 1px solid rgba(148,163,184,0.25); background: rgba(148,163,184,0.04); }
+.at-msg { color: var(--text-prime); flex: 1; word-break: break-word; }
+.at-empty { color: var(--text-muted); font-style: italic; padding: 16px; text-align: center; font-size: 11px; }
+.at-cursor { display: inline-block; width: 8px; height: 12px; background: var(--emerald); animation: at-blink 1s step-end infinite; margin-left: 2px; vertical-align: middle; }
+@keyframes at-blink { 50% { opacity: 0; } }
+
+/* ============================================================
+   SKELETON LOADERS
+   ============================================================ */
+.skeleton-block {
+  position: relative; overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 4px;
+  height: 60px; margin-bottom: 8px;
+}
+.skeleton-block::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,0.10), transparent);
+  animation: skel 1.4s linear infinite;
+}
+@keyframes skel { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.skeleton-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+html[data-theme="light"] .skeleton-block { background: rgba(20,40,30,0.05); border-color: rgba(20,40,30,0.08); }
+html[data-theme="light"] .skeleton-block::after { background: linear-gradient(90deg, transparent, rgba(34,160,122,0.14), transparent); }
+
+/* ============================================================
+   ONBOARDING MODAL
+   ============================================================ */
+#onboarding-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(2,4,8,0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: ob-fade 0.3s ease;
+}
+#onboarding-overlay.active { display: flex; }
+@keyframes ob-fade { from { opacity: 0; } to { opacity: 1; } }
+.ob-shell {
+  width: 100%; max-width: 720px;
+  background: linear-gradient(180deg, rgba(10,14,20,0.95), rgba(4,7,12,0.98));
+  border: 1px solid;
+  border-image: linear-gradient(135deg, var(--emerald), var(--violet)) 1;
+  border-radius: 6px;
+  font-family: var(--font-tact);
+  color: var(--text-prime);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 60px rgba(16,185,129,0.12);
+  overflow: hidden;
+  animation: ob-pop 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes ob-pop { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+html[data-theme="light"] .ob-shell {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(240,247,242,0.98));
+  color: var(--text-prime);
+}
+.ob-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(16,185,129,0.2);
+  background: rgba(0,0,0,0.3);
+}
+html[data-theme="light"] .ob-header { background: rgba(34,160,122,0.06); border-bottom-color: rgba(34,160,122,0.2); }
+.ob-brand { display: flex; align-items: center; gap: 10px; }
+.ob-diamond { width: 14px; height: 14px; background: var(--emerald); transform: rotate(45deg); box-shadow: 0 0 10px var(--emerald-glow); }
+.ob-title-mini { font-size: 11px; letter-spacing: 0.25em; color: var(--emerald); text-transform: uppercase; }
+.ob-sub-mini { font-size: 9px; letter-spacing: 0.15em; color: var(--text-muted); margin-top: 2px; }
+.ob-close-btn {
+  background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted);
+  font-family: var(--font-tact); font-size: 11px; cursor: pointer; padding: 4px 12px; border-radius: 2px;
+  transition: all 0.15s;
+}
+.ob-close-btn:hover { color: var(--crimson); border-color: var(--crimson); }
+.ob-progress { display: flex; align-items: center; gap: 6px; padding: 16px 22px 0; }
+.ob-step-node {
+  width: 26px; height: 26px;
+  border: 1px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--text-muted);
+  font-family: var(--font-tact);
+  transition: all 0.25s;
+  border-radius: 2px;
+}
+.ob-step-node.done { border-color: var(--emerald-dim); color: var(--emerald-dim); background: rgba(16,185,129,0.06); }
+.ob-step-node.active { border-color: var(--emerald); color: var(--emerald); background: rgba(16,185,129,0.12); box-shadow: 0 0 12px rgba(16,185,129,0.3); }
+.ob-step-sep { flex: 1; height: 1px; background: rgba(255,255,255,0.08); max-width: 40px; transition: background 0.3s; }
+.ob-step-sep.done { background: var(--emerald-dim); }
+.ob-body { padding: 22px 24px 18px; min-height: 320px; }
+.ob-slide { display: none; animation: ob-fadein 0.35s ease; }
+.ob-slide.active { display: block; }
+@keyframes ob-fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.ob-section-label {
+  color: var(--emerald);
+  font-size: 10px; letter-spacing: 0.3em;
+  margin-bottom: 14px; text-transform: uppercase;
+  border-bottom: 1px solid rgba(16,185,129,0.18);
+  padding-bottom: 8px;
+}
+.ob-big-title { font-family: var(--font-intel); font-size: 22px; font-weight: 800; color: var(--text-prime); line-height: 1.2; margin-bottom: 10px; }
+.ob-hl-g { color: var(--emerald); }
+.ob-hl-p { color: var(--violet); }
+.ob-hl-o { color: var(--amber); }
+.ob-hl-r { color: var(--crimson); }
+.ob-desc { color: var(--text-sec); font-size: 12px; line-height: 1.85; margin-bottom: 18px; }
+.ob-pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.ob-pillar { border: 1px solid; padding: 14px; background: rgba(0,0,0,0.4); border-radius: 3px; }
+html[data-theme="light"] .ob-pillar { background: rgba(255,255,255,0.5); }
+.ob-pillar.g { border-color: var(--emerald-border); }
+.ob-pillar.p { border-color: var(--violet-border); }
+.ob-pillar.o { border-color: rgba(245,158,11,0.32); }
+.ob-pillar-head { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 6px; }
+.ob-pillar-body { font-size: 11px; color: var(--text-sec); line-height: 1.65; }
+.ob-footer { padding: 14px 22px; display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid rgba(16,185,129,0.15); background: rgba(0,0,0,0.25); flex-wrap: wrap; }
+html[data-theme="light"] .ob-footer { background: rgba(34,160,122,0.05); border-top-color: rgba(34,160,122,0.2); }
+.ob-btn {
+  padding: 9px 22px; font-family: var(--font-tact); font-size: 11px;
+  letter-spacing: 0.15em; cursor: pointer; border-radius: 2px;
   text-transform: uppercase; transition: all 0.15s;
   background: transparent; border: 1px solid;
 }
@@ -368,6 +750,205 @@ html[data-theme="light"] .home-screen-grid > .home-right-panel {
 }
 .hrp-daily-rewards { background: linear-gradient(140deg, rgba(168,85,247,0.06), rgba(34,160,122,0.04)) !important; }
 
+/* ================================================================
+   RIGHT PANEL — V2 RECRAFTED (sharper, cleaner, hierarchical)
+   ================================================================ */
+.home-right-panel {
+  display: flex !important;
+  flex-direction: column;
+  gap: 12px !important;
+  padding: 14px !important;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34,160,122,0.4) transparent;
+}
+.home-right-panel::-webkit-scrollbar { width: 4px; }
+.home-right-panel::-webkit-scrollbar-thumb { background: rgba(34,160,122,0.4); border-radius: 2px; }
+
+/* === OPERATOR CARD (top) === */
+.op-card {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 14px;
+  padding: 14px 16px !important;
+  background: linear-gradient(135deg, rgba(34,160,122,0.10), rgba(99,102,241,0.06)) !important;
+  border: 1px solid rgba(34,160,122,0.30) !important;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.op-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--emerald), var(--violet), var(--amber), transparent);
+  background-size: 200% 100%;
+  animation: streak-shine 4s linear infinite;
+}
+.op-rank-badge {
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  border: 1.5px solid var(--emerald);
+  border-radius: 8px;
+  background: radial-gradient(circle at center, rgba(34,160,122,0.20), rgba(8,12,18,0.6));
+  padding: 8px 4px;
+  box-shadow: 0 0 18px rgba(34,160,122,0.25), inset 0 0 12px rgba(34,160,122,0.1);
+}
+.op-rank-letter {
+  font-family: var(--font-display, 'JetBrains Mono'), monospace;
+  font-size: 28px; font-weight: 800;
+  color: var(--emerald);
+  line-height: 1;
+  text-shadow: 0 0 12px var(--emerald-glow, rgba(34,160,122,0.6));
+}
+.op-rank-label {
+  font-family: var(--font-tact); font-size: 8px;
+  color: var(--text-muted); letter-spacing: 0.12em; margin-top: 4px;
+}
+.op-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.op-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.op-name {
+  font-family: var(--font-tact); font-size: 13px; font-weight: 700;
+  color: var(--text-pri); letter-spacing: 0.04em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.op-level {
+  font-family: var(--font-tact); font-size: 11px;
+  color: var(--violet);
+  background: rgba(168,85,247,0.12);
+  padding: 2px 8px; border-radius: 3px;
+  border: 1px solid rgba(168,85,247,0.3);
+  white-space: nowrap;
+}
+.op-class {
+  font-family: var(--font-tact); font-size: 9.5px;
+  color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase;
+}
+.op-xp-row { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+.op-xp-bar { height: 5px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; margin-top: 2px; }
+.op-xp-fill { height: 100%; background: linear-gradient(90deg, var(--emerald), var(--violet)); border-radius: 3px; transition: width 0.6s; box-shadow: 0 0 8px rgba(34,160,122,0.4); }
+.op-streak {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px;
+  font-family: var(--font-tact); font-size: 10px;
+  color: var(--amber);
+}
+.op-streak .flame { font-size: 13px; }
+.op-streak .num { font-weight: 700; color: var(--amber); }
+.op-streak .legend { color: #ef4444; margin-left: 6px; padding: 1px 6px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); border-radius: 3px; font-size: 8.5px; }
+
+/* === BLOCK HEADERS (V2) === */
+.hrp-v2-block {
+  background: rgba(8, 12, 20, 0.55) !important;
+  border: 1px solid rgba(34, 160, 122, 0.18) !important;
+  border-radius: 5px;
+  padding: 11px 13px !important;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.hrp-v2-block:hover {
+  border-color: rgba(34, 160, 122, 0.40) !important;
+  box-shadow: 0 0 14px rgba(34, 160, 122, 0.10);
+  transform: translateY(-1px);
+}
+.hrp-v2-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-tact); font-size: 9.5px;
+  letter-spacing: 0.10em;
+  color: var(--text-sec);
+  margin-bottom: 9px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(34, 160, 122, 0.18);
+}
+.hrp-v2-head .h-label { display: flex; align-items: center; gap: 6px; }
+.hrp-v2-head .h-icon { color: var(--emerald); font-size: 12px; }
+.hrp-v2-head .h-aux { color: var(--text-muted); font-size: 9px; }
+
+/* === DAILY PROGRESS V2 === */
+.dp-grid { display: flex; flex-direction: column; gap: 8px; }
+.dp-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 9px;
+  align-items: center;
+  padding: 6px 0;
+}
+.dp-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  font-size: 12px;
+  border-radius: 4px;
+  background: rgba(34,160,122,0.10);
+  color: var(--emerald);
+  border: 1px solid rgba(34,160,122,0.20);
+}
+.dp-row.violet .dp-icon { background: rgba(168,85,247,0.10); color: var(--violet); border-color: rgba(168,85,247,0.20); }
+.dp-row.crimson .dp-icon { background: rgba(239,68,68,0.10); color: #ef4444; border-color: rgba(239,68,68,0.25); }
+.dp-info { min-width: 0; }
+.dp-label { font-family: var(--font-tact); font-size: 9.5px; color: var(--text-sec); letter-spacing: 0.05em; }
+.dp-bar-wrap { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.dp-bar-fill { height: 100%; background: var(--emerald); border-radius: 2px; transition: width 0.6s; box-shadow: 0 0 6px rgba(34,160,122,0.4); }
+.dp-row.violet .dp-bar-fill { background: var(--violet); box-shadow: 0 0 6px rgba(168,85,247,0.4); }
+.dp-row.crimson .dp-bar-fill { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+.dp-val {
+  font-family: var(--font-tact); font-size: 10px;
+  color: var(--text-pri); white-space: nowrap;
+  background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 3px;
+}
+.dp-row.done .dp-val { color: var(--emerald); }
+.dp-row.done .dp-val::after { content: ' ✓'; color: var(--emerald); }
+
+/* === MISSIONS V2 === */
+.miss-list { display: flex; flex-direction: column; gap: 5px; }
+.miss-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px; align-items: center;
+  padding: 7px 9px;
+  background: rgba(0,0,0,0.25);
+  border-left: 2px solid var(--text-muted);
+  border-radius: 3px;
+  font-family: var(--font-tact);
+  transition: transform 0.15s, background 0.15s;
+}
+.miss-row:hover { background: rgba(34,160,122,0.06); transform: translateX(2px); }
+.miss-row.r-s { border-left-color: var(--amber); }
+.miss-row.r-a { border-left-color: var(--violet); }
+.miss-row.r-b { border-left-color: var(--emerald); }
+.miss-row.r-c { border-left-color: #22d3ee; }
+.miss-row.r-d { border-left-color: var(--text-muted); }
+.miss-rank {
+  font-size: 9px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  padding: 3px 4px; border-radius: 3px;
+}
+.miss-row.r-s .miss-rank { color: var(--amber); }
+.miss-row.r-a .miss-rank { color: var(--violet); }
+.miss-row.r-b .miss-rank { color: var(--emerald); }
+.miss-row.r-c .miss-rank { color: #22d3ee; }
+.miss-title {
+  font-size: 11px; color: var(--text-pri);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+}
+.miss-go {
+  font-size: 11px; cursor: pointer;
+  background: rgba(34,160,122,0.12);
+  border: 1px solid rgba(34,160,122,0.35);
+  color: var(--emerald);
+  padding: 3px 9px; border-radius: 3px;
+  font-family: var(--font-tact); font-weight: 600;
+  transition: all 0.15s;
+}
+.miss-go:hover { background: var(--emerald); color: #000; box-shadow: 0 0 10px rgba(34,160,122,0.5); }
+.miss-empty {
+  text-align: center; padding: 14px 8px;
+  color: var(--text-muted); font-family: var(--font-tact); font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+/* === ACTIVITY TERMINAL — slimmer === */
+.home-right-panel .activity-terminal { max-height: 130px !important; }
+
 /* Smooth hover for all panels & cards (microinteractions) */
 .panel, .matrix-panel, .hrp-block, .hero-showcase, .stat-card, .dock-btn, .btn,
 .dash-chip, .qa-btn, .tact-btn {
@@ -525,15 +1106,108 @@ body.auth-locked #cmd-dock { opacity: 0; filter: blur(8px); transform: scale(0.9
 }
 #auth-screen.visible { display: flex; }
 .auth-shell {
-  width: min(920px, 94vw);
+  width: min(960px, 94vw);
   border: var(--panel-border);
-  background: rgba(6,7,12,0.78);
+  background: rgba(6,7,12,0.85);
   backdrop-filter: var(--glass-blur);
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   position: relative;
   overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(34,160,122,0.08);
 }
+
+/* === AUTH V2 === */
+.auth-tabs-v2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 16px; border: 1px solid rgba(34,160,122,0.2); border-radius: 4px; overflow: hidden; }
+.auth-tab-btn {
+  background: transparent; border: none; cursor: pointer;
+  padding: 10px 12px;
+  font-family: var(--font-tact); font-size: 11px; letter-spacing: 0.12em;
+  color: var(--text-muted);
+  transition: all 0.18s;
+  border-right: 1px solid rgba(34,160,122,0.15);
+}
+.auth-tab-btn:last-child { border-right: none; }
+.auth-tab-btn:hover { color: var(--text-pri); background: rgba(34,160,122,0.04); }
+.auth-tab-btn.active { background: linear-gradient(135deg, rgba(34,160,122,0.18), rgba(34,160,122,0.08)); color: var(--emerald); box-shadow: inset 0 -2px 0 var(--emerald); }
+#auth-tab-register.active { background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(168,85,247,0.08)); color: var(--violet); box-shadow: inset 0 -2px 0 var(--violet); }
+
+.field-hint { color: var(--text-ghost); font-size: 9px; margin-left: 6px; letter-spacing: 0.05em; text-transform: none; font-weight: 400; }
+
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 42px !important; }
+.pw-toggle {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 16px;
+  padding: 4px 8px; border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+}
+.pw-toggle:hover { color: var(--emerald); background: rgba(34,160,122,0.1); }
+.pw-toggle.shown { color: var(--emerald); }
+
+.pw-strength { font-family: var(--font-tact); font-size: 9px; margin-left: 8px; letter-spacing: 0.08em; }
+.pw-strength.weak { color: #ef4444; }
+.pw-strength.med { color: var(--amber); }
+.pw-strength.strong { color: var(--emerald); }
+.pw-strength-bar { height: 3px; background: rgba(255,255,255,0.06); margin-top: 4px; border-radius: 2px; overflow: hidden; }
+.pw-strength-fill { height: 100%; width: 0; background: var(--text-muted); transition: width 0.3s, background 0.3s; }
+.pw-strength-fill.weak { background: #ef4444; }
+.pw-strength-fill.med { background: var(--amber); }
+.pw-strength-fill.strong { background: var(--emerald); }
+
+.pw-match-hint { font-family: var(--font-tact); font-size: 9px; margin-top: 4px; letter-spacing: 0.06em; }
+.pw-match-hint.ok { color: var(--emerald); }
+.pw-match-hint.bad { color: #ef4444; }
+
+.auth-submit { margin-top: 4px; height: 42px; font-size: 12px !important; letter-spacing: 0.16em !important; }
+
+.auth-row-links { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; font-family: var(--font-tact); font-size: 10px; }
+.auth-link { color: var(--text-sec); cursor: pointer; transition: color 0.15s; letter-spacing: 0.05em; }
+.auth-link:hover { color: var(--emerald); text-decoration: underline; }
+.auth-link-sep { color: var(--text-ghost); }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 16px 0 12px;
+  font-family: var(--font-tact); font-size: 9px; letter-spacing: 0.12em;
+  color: var(--text-ghost);
+}
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(34,160,122,0.25), transparent); }
+
+.oauth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.oauth-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-pri);
+  font-family: var(--font-tact); font-size: 10.5px; letter-spacing: 0.1em;
+  cursor: pointer; border-radius: 3px;
+  transition: all 0.18s;
+}
+.oauth-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+.oauth-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  font-weight: 800; font-size: 13px;
+  border-radius: 50%;
+}
+.oauth-google .oauth-ic { background: linear-gradient(135deg, #4285f4 0%, #34a853 35%, #fbbc05 70%, #ea4335 100%); color: #fff; font-family: 'Product Sans', system-ui, sans-serif; }
+.oauth-google:hover { border-color: #4285f4; box-shadow: 0 0 14px rgba(66,133,244,0.25); }
+.oauth-apple .oauth-ic { background: #fff; color: #000; font-size: 14px; }
+.oauth-apple:hover { border-color: #fff; box-shadow: 0 0 14px rgba(255,255,255,0.18); }
+
+.auth-policy-line { color: var(--text-ghost); font-size: 10px; line-height: 1.55; margin-top: 12px; padding-top: 10px; border-top: 0.5px solid rgba(255,255,255,0.04); }
+.auth-policy-line a { color: var(--emerald); text-decoration: underline; }
+
+/* Password reset modal */
+.pw-reset-body { padding: 4px 2px; }
+.pw-reset-body p { color: var(--text-sec); font-size: 12px; line-height: 1.5; margin: 0 0 12px; }
+.pw-reset-result { font-family: var(--font-tact); font-size: 10.5px; margin-top: 10px; padding: 8px 10px; border-radius: 3px; min-height: 14px; }
+.pw-reset-result.ok { color: var(--emerald); background: rgba(34,160,122,0.08); border: 1px solid rgba(34,160,122,0.3); }
+.pw-reset-result.err { color: #ef4444; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); }
 .auth-shell::before {
   content: "";
   position: absolute; inset: 0;
@@ -5155,32 +5829,73 @@ body.au-fade-in #app, body.au-fade-in #cmd-dock {
       </div>
     </div>
     <div class="auth-panel">
-      <div class="auth-tabs">
-        <button class="btn btn-emerald btn-sm" onclick="setAuthMode('login')">ВХОД</button>
-        <button class="btn btn-violet btn-sm" onclick="setAuthMode('register')">РЕГИСТРАЦИЯ</button>
+      <div class="auth-tabs auth-tabs-v2">
+        <button class="auth-tab-btn active" id="auth-tab-login" onclick="setAuthMode('login')">▸ ВХОД</button>
+        <button class="auth-tab-btn" id="auth-tab-register" onclick="setAuthMode('register')">+ РЕГИСТРАЦИЯ</button>
       </div>
+
+      <div class="field" id="auth-nick-field" style="display:none">
+        <label>ПОЗЫВНОЙ <span class="field-hint">(никнейм оператора, 3–18 символов)</span></label>
+        <input type="text" id="auth-nick" placeholder="например, ShadowReaver" maxlength="18" autocomplete="username">
+      </div>
+
       <div class="field">
         <label>EMAIL</label>
-        <input type="email" id="auth-email" placeholder="operator@aether.net">
+        <input type="email" id="auth-email" placeholder="operator@aether.net" autocomplete="email">
       </div>
+
       <div class="field">
-        <label>PASSWORD</label>
-        <input type="password" id="auth-password" placeholder="Минимум 6 символов">
+        <label>PASSWORD <span class="pw-strength" id="pw-strength-label"></span></label>
+        <div class="pw-wrap">
+          <input type="password" id="auth-password" placeholder="Минимум 6 символов" autocomplete="current-password">
+          <button type="button" class="pw-toggle" id="pw-toggle-1" onclick="togglePwVis('auth-password','pw-toggle-1')" title="Показать">👁</button>
+        </div>
+        <div class="pw-strength-bar" id="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
       </div>
-      <button class="btn btn-emerald" style="width:100%" onclick="submitAuth()" id="auth-submit-btn">ВХОД</button>
+
+      <div class="field" id="auth-confirm-field" style="display:none">
+        <label>ПОДТВЕРЖДЕНИЕ ПАРОЛЯ</label>
+        <div class="pw-wrap">
+          <input type="password" id="auth-password-confirm" placeholder="Повторите пароль" autocomplete="new-password">
+          <button type="button" class="pw-toggle" id="pw-toggle-2" onclick="togglePwVis('auth-password-confirm','pw-toggle-2')" title="Показать">👁</button>
+        </div>
+        <div class="pw-match-hint" id="pw-match-hint"></div>
+      </div>
+
+      <button class="btn btn-emerald auth-submit" style="width:100%" onclick="submitAuth()" id="auth-submit-btn">ВХОД</button>
+
+      <div class="auth-row-links">
+        <a class="auth-link" id="auth-forgot-link" onclick="openPasswordResetModal()">Забыли пароль?</a>
+        <span class="auth-link-sep">·</span>
+        <a class="auth-link" onclick="setAuthMode(authMode==='login'?'register':'login')" id="auth-toggle-link">Создать аккаунт</a>
+      </div>
+
+      <div class="auth-divider"><span>ИЛИ ВОЙТИ ЧЕРЕЗ</span></div>
+
+      <div class="oauth-grid">
+        <button class="oauth-btn oauth-google" onclick="signInWithGoogle()" title="Google">
+          <span class="oauth-ic">G</span><span class="oauth-lbl">GOOGLE</span>
+        </button>
+        <button class="oauth-btn oauth-apple" onclick="signInWithApple()" title="Apple ID / Game Center">
+          <span class="oauth-ic"></span><span class="oauth-lbl">GAME CENTER</span>
+        </button>
+      </div>
+
+      <button class="btn btn-violet btn-sm" style="width:100%; margin-top:10px" onclick="offlineAdminLogin()">⚡ ГОСТЕВОЙ АДМИН (OFFLINE)</button>
+
+      <div class="auth-error" id="auth-error"></div>
+
       <div class="auth-security-badge">
         <span>🔒</span>
         <span>SSL · 2FA · GDPR compliant · Data encrypted</span>
       </div>
-      <button class="btn btn-ghost" style="width:100%; margin-top:8px" onclick="signInWithGoogle()">GOOGLE SIGN-IN</button>
-      <button class="btn btn-violet" style="width:100%; margin-top:8px" onclick="offlineAdminLogin()">ГОСТЕВОЙ АДМИН (OFFLINE)</button>
-      <div class="auth-error" id="auth-error"></div>
+
       <div class="auth-policy-line">
         Регистрируясь, вы подтверждаете согласие с
         <a href="javascript:openModal('privacy-modal')">Политикой конфиденциальности</a>
         и Условиями использования. Подтверждение чек-боксом обязательно.
       </div>
-      <div class="auth-note">Если Firebase недоступен, используйте offline-режим: логин <b>admin@aether.local</b> и пароль <b>AetherAdmin#777</b>.</div>
+      <div class="auth-note">Offline-режим: логин <b>admin@aether.local</b> · пароль <b>AetherAdmin#777</b>.</div>
     </div>
   </div>
 </div>
@@ -6108,6 +6823,25 @@ body.au-fade-in #app, body.au-fade-in #cmd-dock {
   </div>
 </div>
 
+<!-- ===== PASSWORD RESET MODAL ===== -->
+<div class="modal-overlay" id="pw-reset-modal" style="z-index:4100">
+  <div class="modal" style="max-width:460px;width:100%">
+    <div class="modal-header">
+      <span class="modal-title">⟳ ВОССТАНОВЛЕНИЕ ДОСТУПА</span>
+      <button class="modal-close" onclick="closeModal('pw-reset-modal')">✕</button>
+    </div>
+    <div class="modal-body pw-reset-body">
+      <p>Укажите email, привязанный к аккаунту. На него будет отправлено защищённое письмо со ссылкой для сброса пароля.</p>
+      <div class="field">
+        <label>EMAIL</label>
+        <input type="email" id="pw-reset-email" placeholder="operator@aether.net" autocomplete="email">
+      </div>
+      <button class="btn btn-emerald" style="width:100%;margin-top:8px" onclick="submitPasswordReset()" id="pw-reset-submit-btn">✉ ОТПРАВИТЬ ПИСЬМО</button>
+      <div class="pw-reset-result" id="pw-reset-result"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ============================================================
      MONETIZATION STORE MODAL — AETHER PASS & EMERALD PACKS
      ============================================================ -->
@@ -6601,8 +7335,95 @@ function showAuthScreen(show) {
 
 function setAuthMode(mode) {
   authMode = mode === 'register' ? 'register' : 'login';
-  document.getElementById('auth-submit-btn').textContent = authMode === 'register' ? 'СОЗДАТЬ АККАУНТ' : 'ВХОД';
-  document.getElementById('auth-error').textContent = '';
+  const isReg = authMode === 'register';
+  const submitBtn = document.getElementById('auth-submit-btn');
+  if (submitBtn) submitBtn.textContent = isReg ? '✦ СОЗДАТЬ АККАУНТ' : '▸ ВХОД';
+  const tabL = document.getElementById('auth-tab-login');
+  const tabR = document.getElementById('auth-tab-register');
+  if (tabL) tabL.classList.toggle('active', !isReg);
+  if (tabR) tabR.classList.toggle('active', isReg);
+  const nickF = document.getElementById('auth-nick-field');
+  const confF = document.getElementById('auth-confirm-field');
+  if (nickF) nickF.style.display = isReg ? 'block' : 'none';
+  if (confF) confF.style.display = isReg ? 'block' : 'none';
+  const pwInput = document.getElementById('auth-password');
+  if (pwInput) pwInput.setAttribute('autocomplete', isReg ? 'new-password' : 'current-password');
+  const toggleLink = document.getElementById('auth-toggle-link');
+  if (toggleLink) toggleLink.textContent = isReg ? 'Уже есть аккаунт? Войти' : 'Создать новый аккаунт';
+  const errEl = document.getElementById('auth-error');
+  if (errEl) errEl.textContent = '';
+  // Reset strength meter on mode switch
+  updatePasswordStrength();
+  updatePasswordMatch();
+}
+
+function togglePwVis(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (!inp) return;
+  const shown = inp.type === 'text';
+  inp.type = shown ? 'password' : 'text';
+  if (btn) btn.classList.toggle('shown', !shown);
+}
+
+function passwordStrength(pw) {
+  if (!pw) return { score: 0, label: '', cls: '' };
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 2) return { score, label: 'СЛАБЫЙ', cls: 'weak', pct: 25 };
+  if (score === 3) return { score, label: 'СРЕДНИЙ', cls: 'med', pct: 60 };
+  return { score, label: 'НАДЁЖНЫЙ', cls: 'strong', pct: 100 };
+}
+
+function updatePasswordStrength() {
+  const pwEl = document.getElementById('auth-password');
+  const labelEl = document.getElementById('pw-strength-label');
+  const fillEl = document.getElementById('pw-strength-fill');
+  if (!pwEl || !labelEl || !fillEl) return;
+  if (authMode !== 'register' || !pwEl.value) {
+    labelEl.textContent = '';
+    labelEl.className = 'pw-strength';
+    fillEl.style.width = '0%';
+    fillEl.className = 'pw-strength-fill';
+    return;
+  }
+  const s = passwordStrength(pwEl.value);
+  labelEl.textContent = '· ' + s.label;
+  labelEl.className = 'pw-strength ' + s.cls;
+  fillEl.style.width = s.pct + '%';
+  fillEl.className = 'pw-strength-fill ' + s.cls;
+}
+
+function updatePasswordMatch() {
+  const pw = document.getElementById('auth-password');
+  const pw2 = document.getElementById('auth-password-confirm');
+  const hint = document.getElementById('pw-match-hint');
+  if (!pw || !pw2 || !hint) return;
+  if (authMode !== 'register' || !pw2.value) {
+    hint.textContent = '';
+    hint.className = 'pw-match-hint';
+    return;
+  }
+  if (pw.value === pw2.value) {
+    hint.textContent = '✓ Пароли совпадают';
+    hint.className = 'pw-match-hint ok';
+  } else {
+    hint.textContent = '✗ Пароли не совпадают';
+    hint.className = 'pw-match-hint bad';
+  }
+}
+
+// Nickname validation: 3–18 chars, latin/cyrillic/digits/_/-
+function validateNickname(nick) {
+  if (!nick) return 'Укажите позывной (никнейм).';
+  if (nick.length < 3) return 'Позывной слишком короткий — минимум 3 символа.';
+  if (nick.length > 18) return 'Позывной слишком длинный — максимум 18 символов.';
+  if (!/^[A-Za-zА-Яа-яЁё0-9_\-\.]+$/.test(nick)) return 'Позывной может содержать только буквы, цифры, _, -, .';
+  return '';
 }
 
 function setAuthError(msg) {
@@ -6619,18 +7440,41 @@ async function initFirebaseAuth() {
     const appMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js');
     const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
     const firebaseConfig = {
-      apiKey: 'AIzaSyCmcfcLqvVCG5rWbzvFf7Oblc8ipmBlVWQ',
-      authDomain: 'aetherprotocol-310c0.firebaseapp.com',
-      projectId: 'aetherprotocol-310c0',
-      storageBucket: 'aetherprotocol-310c0.firebasestorage.app',
-      messagingSenderId: '635629853210',
-      appId: '1:635629853210:web:be471118edd7b56f884fa3',
-      measurementId: 'G-0JBF2FJT7K'
+      apiKey: 'AIzaSyAKDVHXqYctlMKjJfmBR7VFlP_H43yDlog',
+      authDomain: 'aether-protocol-45547.firebaseapp.com',
+      projectId: 'aether-protocol-45547',
+      storageBucket: 'aether-protocol-45547.firebasestorage.app',
+      messagingSenderId: '296258471663',
+      appId: '1:296258471663:web:75f3a28938a1feded67d1a',
+      measurementId: 'G-J1WTVH9MSG'
     };
     const app = appMod.initializeApp(firebaseConfig);
     firebaseAuth = authMod.getAuth(app);
     firebaseProviders.google = new authMod.GoogleAuthProvider();
+    firebaseProviders.google.setCustomParameters({ prompt: 'select_account' });
+    firebaseProviders.google.addScope('email');
+    firebaseProviders.google.addScope('profile');
+    // Apple / Game Center provider — uses Apple ID OAuth (powers Game Center auth)
+    try {
+      firebaseProviders.apple = new authMod.OAuthProvider('apple.com');
+      firebaseProviders.apple.addScope('email');
+      firebaseProviders.apple.addScope('name');
+    } catch (apErr) { console.warn('[Apple provider init]', apErr); }
     authReady = true;
+    // Handle pending redirect result (Google login via redirect-flow)
+    try {
+      const redirectRes = await authMod.getRedirectResult(firebaseAuth);
+      if (redirectRes && redirectRes.user) {
+        if (typeof toast === 'function') toast('GOOGLE OAUTH', 'Авторизация через Google прошла успешно.', 'success', 3500);
+      }
+    } catch (rErr) {
+      console.warn('[GoogleRedirect]', rErr);
+      if (rErr && rErr.code === 'auth/unauthorized-domain') {
+        setAuthError('Домен ' + location.hostname + ' не авторизован в Firebase. Открой Firebase Console → Authentication → Settings → Authorized domains и добавь его.');
+      } else if (rErr && rErr.message) {
+        setAuthError('Google: ' + rErr.message);
+      }
+    }
     authMod.onAuthStateChanged(firebaseAuth, async (user) => {
       if (GS.auth && GS.auth.offlineAdmin) {
         document.getElementById('hdr-user-email').textContent = `${OFFLINE_ADMIN.email} (OFFLINE)`;
@@ -6673,6 +7517,16 @@ async function submitAuth() {
     return;
   }
 
+  if (authMode === 'register') {
+    const nick = (document.getElementById('auth-nick') || {}).value || '';
+    const nickTrim = nick.trim();
+    const nickErr = validateNickname(nickTrim);
+    if (nickErr) { setAuthError(nickErr); return; }
+    const password2 = (document.getElementById('auth-password-confirm') || {}).value || '';
+    if (password !== password2) { setAuthError('Пароли не совпадают. Проверьте поле подтверждения.'); return; }
+    if (password.length < 6) { setAuthError('Пароль слишком короткий — минимум 6 символов.'); return; }
+  }
+
   if (!authReady) {
     setAuthError('Firebase недоступен. Используйте ГОСТЕВОЙ АДМИН (OFFLINE).');
     return;
@@ -6683,19 +7537,37 @@ async function submitAuth() {
     setAuthError('');
     const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
     if (authMode === 'register') {
-      initiateRegistration(email, password);
+      const nickTrim = document.getElementById('auth-nick').value.trim();
+      initiateRegistration(email, password, nickTrim);
     } else {
       await authMod.signInWithEmailAndPassword(firebaseAuth, email, password);
     }
   } catch (e) {
-    setAuthError(e.message || 'Ошибка авторизации');
+    setAuthError(humanizeAuthError(e));
   } finally {
     authInFlight = false;
   }
 }
 
-function initiateRegistration(email, password) {
-  pendingRegistration = { email, password };
+function humanizeAuthError(e) {
+  const code = e && e.code;
+  const map = {
+    'auth/invalid-email': 'Неверный формат email.',
+    'auth/user-not-found': 'Пользователь не найден. Зарегистрируйтесь.',
+    'auth/wrong-password': 'Неверный пароль.',
+    'auth/invalid-credential': 'Неверный email или пароль.',
+    'auth/email-already-in-use': 'Этот email уже зарегистрирован — войдите вместо создания.',
+    'auth/weak-password': 'Слишком слабый пароль — минимум 6 символов.',
+    'auth/network-request-failed': 'Сеть недоступна. Проверьте подключение.',
+    'auth/too-many-requests': 'Слишком много попыток — подождите несколько минут.',
+    'auth/operation-not-allowed': 'Email/пароль провайдер выключен в Firebase Console.',
+    'auth/user-disabled': 'Аккаунт заблокирован.'
+  };
+  return map[code] || (e && e.message) || 'Ошибка авторизации';
+}
+
+function initiateRegistration(email, password, nickname) {
+  pendingRegistration = { email, password, nickname: nickname || '' };
   const cb = document.getElementById('privacy-agree-checkbox');
   const custom = document.getElementById('privacy-checkbox-custom');
   const btn = document.getElementById('privacy-confirm-btn');
@@ -6728,16 +7600,119 @@ async function confirmPrivacyAndRegister() {
   try {
     authInFlight = true;
     const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
-    await authMod.createUserWithEmailAndPassword(firebaseAuth, pending.email, pending.password);
+    const cred = await authMod.createUserWithEmailAndPassword(firebaseAuth, pending.email, pending.password);
+    // Persist nickname → Firebase profile + local game state
+    if (pending.nickname && cred && cred.user) {
+      try {
+        await authMod.updateProfile(cred.user, { displayName: pending.nickname });
+      } catch (upErr) { console.warn('[updateProfile]', upErr); }
+      try {
+        GS.player = GS.player || {};
+        GS.player.name = pending.nickname;
+        if (typeof saveState === 'function') saveState();
+      } catch (e) {}
+    }
+    // Send verification email (best-effort, non-blocking)
+    if (cred && cred.user) {
+      try { authMod.sendEmailVerification(cred.user); } catch (vErr) {}
+    }
     pendingRegistration = null;
     try { localStorage.setItem('aether_just_registered', '1'); } catch (e) {}
+    if (typeof toast === 'function') toast('АККАУНТ СОЗДАН', 'Добро пожаловать, ' + (pending.nickname || 'оператор') + '! Письмо для верификации отправлено.', 'success', 4500);
     setTimeout(function () {
       if (typeof openOnboarding === 'function') openOnboarding();
     }, 800);
   } catch (e) {
-    setAuthError(e.message || 'Ошибка регистрации');
+    setAuthError(humanizeAuthError(e));
   } finally {
     authInFlight = false;
+  }
+}
+
+async function signInWithApple() {
+  if (!authReady || authInFlight) {
+    if (!authReady) setAuthError('Firebase не готов. Используйте ГОСТЕВОЙ АДМИН.');
+    return;
+  }
+  if (!firebaseProviders.apple) {
+    setAuthError('Apple ID / Game Center провайдер недоступен. Проверьте Firebase Console → Authentication → Sign-in method → Apple.');
+    return;
+  }
+  try {
+    authInFlight = true;
+    setAuthError('');
+    const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+    let inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (_) { inIframe = true; }
+    if (inIframe) {
+      if (typeof toast === 'function') toast('GAME CENTER', 'Перенаправление на страницу Apple…', 'info', 2500);
+      await authMod.signInWithRedirect(firebaseAuth, firebaseProviders.apple);
+      return;
+    }
+    try {
+      await authMod.signInWithPopup(firebaseAuth, firebaseProviders.apple);
+    } catch (popErr) {
+      const fb = ['auth/popup-blocked', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+      if (fb.includes(popErr && popErr.code)) {
+        await authMod.signInWithRedirect(firebaseAuth, firebaseProviders.apple);
+        return;
+      }
+      throw popErr;
+    }
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'auth/operation-not-allowed') {
+      setAuthError('⚠ Apple-провайдер не включён. Откройте Firebase Console → Authentication → Sign-in method → Apple → Enable.');
+    } else if (code === 'auth/unauthorized-domain') {
+      setAuthError('⚠ Домен «' + location.hostname + '» не разрешён в Firebase. Добавь его в Authorized domains.');
+    } else {
+      setAuthError(humanizeAuthError(e));
+    }
+  } finally {
+    authInFlight = false;
+  }
+}
+
+function openPasswordResetModal() {
+  const emailField = document.getElementById('auth-email');
+  const resetField = document.getElementById('pw-reset-email');
+  if (resetField && emailField && emailField.value) resetField.value = emailField.value.trim();
+  const result = document.getElementById('pw-reset-result');
+  if (result) { result.textContent = ''; result.className = 'pw-reset-result'; }
+  if (typeof openModal === 'function') openModal('pw-reset-modal');
+}
+
+async function submitPasswordReset() {
+  const emailEl = document.getElementById('pw-reset-email');
+  const result = document.getElementById('pw-reset-result');
+  const btn = document.getElementById('pw-reset-submit-btn');
+  if (!emailEl || !result) return;
+  const email = (emailEl.value || '').trim();
+  result.textContent = '';
+  result.className = 'pw-reset-result';
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    result.textContent = '✗ Укажите корректный email.';
+    result.className = 'pw-reset-result err';
+    return;
+  }
+  if (!authReady) {
+    result.textContent = '✗ Firebase недоступен. Восстановление невозможно в offline-режиме.';
+    result.className = 'pw-reset-result err';
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = '⌛ ОТПРАВКА...'; }
+  try {
+    const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+    await authMod.sendPasswordResetEmail(firebaseAuth, email);
+    result.textContent = '✓ Письмо со ссылкой для сброса отправлено на ' + email + '. Проверьте «Входящие» и папку «Спам».';
+    result.className = 'pw-reset-result ok';
+    if (typeof toast === 'function') toast('ВОССТАНОВЛЕНИЕ', 'Письмо отправлено на ' + email, 'success', 4000);
+    setTimeout(function () { if (typeof closeModal === 'function') closeModal('pw-reset-modal'); }, 4500);
+  } catch (e) {
+    result.textContent = '✗ ' + humanizeAuthError(e);
+    result.className = 'pw-reset-result err';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✉ ОТПРАВИТЬ ПИСЬМО'; }
   }
 }
 
@@ -6780,14 +7755,46 @@ function offlineAdminLogin() {
 }
 
 async function signInWithGoogle() {
-  if (!authReady || authInFlight) return;
+  if (!authReady || authInFlight) {
+    if (!authReady) setAuthError('Firebase не готов. Проверь подключение к интернету или используй ГОСТЕВОЙ АДМИН.');
+    return;
+  }
   try {
     authInFlight = true;
-    const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
     setAuthError('');
-    await authMod.signInWithPopup(firebaseAuth, firebaseProviders.google);
+    const authMod = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+    // Detect if we're in an iframe — popup is unreliable there, prefer redirect
+    let inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (_) { inIframe = true; }
+    if (inIframe) {
+      if (typeof toast === 'function') toast('GOOGLE OAUTH', 'Перенаправление на страницу Google…', 'info', 2500);
+      await authMod.signInWithRedirect(firebaseAuth, firebaseProviders.google);
+      return;
+    }
+    try {
+      await authMod.signInWithPopup(firebaseAuth, firebaseProviders.google);
+    } catch (popupErr) {
+      const code = popupErr && popupErr.code;
+      // On popup failure, fallback to redirect for these recoverable cases
+      const fallbackCodes = ['auth/popup-blocked', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/internal-error', 'auth/network-request-failed'];
+      if (fallbackCodes.includes(code)) {
+        if (typeof toast === 'function') toast('POPUP ЗАБЛОКИРОВАН', 'Переключаюсь на режим перенаправления…', 'warning', 3000);
+        await authMod.signInWithRedirect(firebaseAuth, firebaseProviders.google);
+        return;
+      }
+      throw popupErr;
+    }
   } catch (e) {
-    setAuthError(e.message || 'Google auth error');
+    const code = e && e.code;
+    if (code === 'auth/unauthorized-domain') {
+      setAuthError('⚠ Домен «' + location.hostname + '» не разрешён в Firebase. Открой Firebase Console → Authentication → Settings → Authorized domains и добавь его.');
+    } else if (code === 'auth/operation-not-allowed') {
+      setAuthError('⚠ Google-провайдер выключен в Firebase Console. Открой Authentication → Sign-in method → Google → Enable.');
+    } else if (code === 'auth/network-request-failed') {
+      setAuthError('Сеть недоступна. Проверь подключение и попробуй снова.');
+    } else {
+      setAuthError((e && e.message) || 'Google auth error');
+    }
   } finally {
     authInFlight = false;
   }
@@ -9603,12 +10610,48 @@ function renderHomeScreen() {
             <div class="segbar"><span>MANA</span><div class="segbar-track">${new Array(10).fill(0).map((_, i) => `<span class="segbar-cell ${i < manaPct ? 'on' : ''}"></span>`).join('')}</div><b>${selected.stats.mana}/${selected.stats.maxMana}</b></div>
           </div>
         </div>
-        <!-- Правая панель главного экрана — ЖИВОЙ ОПЕРАТИВНЫЙ ДАШБОРД -->
+        <!-- Правая панель главного экрана — ЖИВОЙ ОПЕРАТИВНЫЙ ДАШБОРД V2 -->
         ${(() => {
-          // Блок из спецификации
-          const rightPanelHTML = `
+          const xp = (GS.player && GS.player.xp) || 0;
+          const lvl = (GS.player && GS.player.level) || 1;
+          const xpForNext = lvl * 250;
+          const xpPct = Math.min(100, (xp / xpForNext) * 100);
+          const playerNick = (GS.player && GS.player.name && GS.player.name !== 'АЛХИМИК') ? GS.player.name : '';
+          const emailNick = (GS.auth && GS.auth.email) ? (typeof maskEmail==='function' ? maskEmail(GS.auth.email).split('@')[0] : GS.auth.email.split('@')[0]) : '';
+          const opName = playerNick || emailNick || 'OPERATOR';
+          const streakNum = (GS.player && GS.player.streak) || 0;
+          const dMiss = (GS.stats && GS.stats.dailyMissions) || 0;
+          const dFoc = (GS.stats && GS.stats.dailyFocus) || 0;
+          const dDmg = (GS.stats && GS.stats.dailyDamage) || 0;
+          return `
 <div class="home-right-panel">
-  <div class="hrp-block" style="grid-column:span 2; padding:0; background:transparent; border:none">
+  <!-- OPERATOR CARD -->
+  <div class="op-card">
+    <div class="op-rank-badge">
+      <div class="op-rank-letter">${(GS.player && GS.player.rank) || 'D'}</div>
+      <div class="op-rank-label">РАНГ</div>
+    </div>
+    <div class="op-info">
+      <div class="op-row">
+        <span class="op-name">${escHtml ? escHtml(opName.toUpperCase().slice(0,20)) : opName.toUpperCase().slice(0,20)}</span>
+        <span class="op-level">LVL ${lvl}</span>
+      </div>
+      <div class="op-class">${typeof getClassLabel==='function' ? getClassLabel(lvl) : 'НОВОБРАНЕЦ'}</div>
+      <div class="op-xp-row">
+        <span>XP</span>
+        <span>${xp} / ${xpForNext}</span>
+      </div>
+      <div class="op-xp-bar"><div class="op-xp-fill" style="width:${xpPct}%"></div></div>
+      <div class="op-streak">
+        <span class="flame">🔥</span>
+        <span><b class="num">${streakNum}</b> ${streakNum===1?'день':(streakNum<5?'дня':'дней')} серии</span>
+        ${streakNum >= 7 ? '<span class="legend">ЛЕГЕНДА</span>' : ''}
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY TERMINAL -->
+  <div class="hrp-v2-block" style="padding:0 !important; background: transparent !important; border: none !important">
     <div class="activity-terminal" id="home-activity-terminal">
       <div class="at-header">
         <span><span class="at-dot"></span>ТЕРМИНАЛ АКТИВНОСТИ</span>
@@ -9617,81 +10660,72 @@ function renderHomeScreen() {
       <div class="at-feed" id="at-feed"></div>
     </div>
   </div>
-  <div class="hrp-block hrp-daily-status">
-    <div class="hrp-label">◈ СТАТУС ДНЯ</div>
-    <div class="hrp-daily-grid">
-      <div class="hrp-daily-item ${GS.stats.dailyMissions >= 5 ? 'done' : ''}">
-        <div class="hrp-daily-icon">⚡</div>
-        <div class="hrp-daily-info">
-          <div class="hrp-daily-name">МИССИИ</div>
-          <div class="hrp-daily-val">${GS.stats.dailyMissions || 0} / 5</div>
+
+  <!-- DAILY PROGRESS -->
+  <div class="hrp-v2-block">
+    <div class="hrp-v2-head">
+      <span class="h-label"><span class="h-icon">◈</span> СТАТУС ДНЯ</span>
+      <span class="h-aux">${dMiss + dFoc + (dDmg>=200?1:0)} / 7</span>
+    </div>
+    <div class="dp-grid">
+      <div class="dp-row ${dMiss>=5?'done':''}">
+        <div class="dp-icon">⚡</div>
+        <div class="dp-info">
+          <div class="dp-label">МИССИИ ВЫПОЛНЕНО</div>
+          <div class="dp-bar-wrap"><div class="dp-bar-fill" style="width:${Math.min(100,(dMiss/5)*100)}%"></div></div>
         </div>
-        <div class="hrp-daily-bar">
-          <div class="hrp-daily-fill" style="width:${Math.min(100, ((GS.stats.dailyMissions||0)/5)*100)}%"></div>
-        </div>
+        <div class="dp-val">${dMiss} / 5</div>
       </div>
-      <div class="hrp-daily-item ${(GS.stats.dailyFocus||0) >= 4 ? 'done' : ''}">
-        <div class="hrp-daily-icon">◎</div>
-        <div class="hrp-daily-info">
-          <div class="hrp-daily-name">ДИСТИЛЛЯЦИЙ</div>
-          <div class="hrp-daily-val">${GS.stats.dailyFocus || 0} / 4</div>
+      <div class="dp-row violet ${dFoc>=4?'done':''}">
+        <div class="dp-icon">◎</div>
+        <div class="dp-info">
+          <div class="dp-label">ДИСТИЛЛЯЦИЙ</div>
+          <div class="dp-bar-wrap"><div class="dp-bar-fill" style="width:${Math.min(100,(dFoc/4)*100)}%"></div></div>
         </div>
-        <div class="hrp-daily-bar">
-          <div class="hrp-daily-fill violet" style="width:${Math.min(100, ((GS.stats.dailyFocus||0)/4)*100)}%"></div>
-        </div>
+        <div class="dp-val">${dFoc} / 4</div>
       </div>
-      <div class="hrp-daily-item ${(GS.stats.dailyDamage||0) >= 200 ? 'done' : ''}">
-        <div class="hrp-daily-icon">⚔</div>
-        <div class="hrp-daily-info">
-          <div class="hrp-daily-name">УРОН БОССУ</div>
-          <div class="hrp-daily-val">${GS.stats.dailyDamage || 0} / 200</div>
+      <div class="dp-row crimson ${dDmg>=200?'done':''}">
+        <div class="dp-icon">⚔</div>
+        <div class="dp-info">
+          <div class="dp-label">УРОН БОССУ</div>
+          <div class="dp-bar-wrap"><div class="dp-bar-fill" style="width:${Math.min(100,(dDmg/200)*100)}%"></div></div>
         </div>
-        <div class="hrp-daily-bar">
-          <div class="hrp-daily-fill crimson" style="width:${Math.min(100, ((GS.stats.dailyDamage||0)/200)*100)}%"></div>
-        </div>
+        <div class="dp-val">${dDmg} / 200</div>
       </div>
     </div>
   </div>
-  <div class="hrp-block hrp-streak-rank">
-    <div class="hrp-two-col">
-      <div class="hrp-streak-box">
-        <div class="hrp-streak-num">${GS.player.streak || 0}</div>
-        <div class="hrp-streak-label">ДНЕЙ СЕРИИ</div>
-        ${(GS.player.streak||0) >= 7 ? '<div class="hrp-streak-fire">🔥 ЛЕГЕНДА</div>' : ''}
-      </div>
-      <div class="hrp-rank-box">
-        <div class="hrp-rank-letter">${GS.player.rank || 'D'}</div>
-        <div class="hrp-rank-label">РАНГ</div>
-        <div class="hrp-rank-class">${getClassLabel ? getClassLabel(GS.player.level) : 'НОВОБРАНЕЦ'}</div>
-      </div>
+
+  <!-- ACTIVE MISSIONS -->
+  <div class="hrp-v2-block">
+    <div class="hrp-v2-head">
+      <span class="h-label"><span class="h-icon">◆</span> АКТИВНЫЕ ДИРЕКТИВЫ</span>
+      <span class="h-aux">${(GS.missions||[]).filter(m=>!m.done).length} в очереди</span>
     </div>
-  </div>
-  <div class="hrp-block hrp-active-missions">
-    <div class="hrp-label">◆ АКТИВНЫЕ ДИРЕКТИВЫ</div>
-    <div class="hrp-mission-list" id="hrp-missions">
+    <div class="miss-list" id="hrp-missions">
       ${(GS.missions||[]).filter(m=>!m.done).slice(0,3).map(m => `
-        <div class="hrp-mission-item rank-${(m.rank||'C').toLowerCase()}">
-          <span class="hrp-m-rank">[${m.rank||'C'}]</span>
-          <span class="hrp-m-title">${escHtml ? escHtml(m.title.slice(0,28)) : m.title.slice(0,28)}</span>
-          <button class="hrp-m-complete btn btn-emerald btn-sm" onclick="completeM('${m.id}')">✓</button>
+        <div class="miss-row r-${(m.rank||'C').toLowerCase()}">
+          <span class="miss-rank">${m.rank||'C'}</span>
+          <span class="miss-title">${escHtml ? escHtml(m.title.slice(0,30)) : m.title.slice(0,30)}</span>
+          <button class="miss-go" onclick="completeM('${m.id}')" title="Завершить миссию">✓</button>
         </div>
-      `).join('') || '<div class="hrp-no-missions">Нет активных миссий.<br>Создай первую директиву.</div>'}
+      `).join('') || '<div class="miss-empty">Нет активных миссий.<br>Создай первую директиву.</div>'}
     </div>
-    <button class="btn btn-emerald btn-sm" style="width:100%;margin-top:8px" onclick="openModal('mission-modal')">+ НОВАЯ ДИРЕКТИВА</button>
+    <button class="btn btn-emerald btn-sm" style="width:100%;margin-top:9px" onclick="openModal('mission-modal')">+ НОВАЯ ДИРЕКТИВА</button>
   </div>
-  <div class="hrp-block hrp-daily-rewards" style="grid-column:span 2">
-    <div class="hrp-label">✸ ЕЖЕДНЕВНАЯ НАГРАДА · ${dailyRewardStreak()} ${dailyRewardStreak()===1?'день':(dailyRewardStreak()<5?'дня':'дней')} подряд</div>
-    <div class="hrp-daily-cal">
-      ${renderDailyRewardCalendar()}
+
+  <!-- DAILY REWARDS -->
+  <div class="hrp-v2-block hrp-daily-rewards">
+    <div class="hrp-v2-head">
+      <span class="h-label"><span class="h-icon" style="color:var(--violet)">✸</span> ЕЖЕДНЕВНАЯ НАГРАДА</span>
+      <span class="h-aux">${dailyRewardStreak()} ${dailyRewardStreak()===1?'день':(dailyRewardStreak()<5?'дня':'дней')} подряд</span>
     </div>
+    <div class="hrp-daily-cal">${renderDailyRewardCalendar()}</div>
     <div class="dr-streak-meter">
       <div class="dr-streak-meter-row">
         <span class="dr-streak-meter-label">ПРОГРЕСС НЕДЕЛИ</span>
         <span class="dr-streak-meter-value">${Math.min(7, dailyRewardStreak() + (dailyRewardClaimable()?1:0))}/7</span>
       </div>
-      <div class="dr-streak-bar">
-        <div class="dr-streak-bar-fill" style="width:${Math.min(100, ((dailyRewardStreak() + (dailyRewardClaimable()?0:0)) / 7) * 100)}%"></div>
-      </div>
+      <div class="dr-streak-bar"><div class="dr-streak-bar-fill" style="width:${Math.min(100, ((dailyRewardStreak()) / 7) * 100)}%"></div></div>
       ${dailyRewardStreak() === 6 && dailyRewardClaimable() ? '<div class="dr-mega-ready">⚡ МЕГА-БОНУС ЗАВТРА! НЕ ПРОПУСТИ ✦</div>' : (dailyRewardStreak() >= 7 ? '<div class="dr-mega-ready">✸ МЕГА АКТИВЕН — ЗАБИРАЙ СЕЙЧАС</div>' : '')}
     </div>
     <button class="btn btn-emerald btn-sm" style="width:100%;margin-top:10px" onclick="claimDailyReward()" ${dailyRewardClaimable() ? '' : 'disabled'}>
@@ -9700,6 +10734,7 @@ function renderHomeScreen() {
   </div>
 </div>
 `;
+})()}
           return rightPanelHTML;
         })()}
       </div>`;
@@ -10399,6 +11434,22 @@ function init() {
 
     setAuthMode('login');
     initFirebaseAuth();
+    // Bind live password strength + match listeners on auth screen
+    try {
+      const pwIn = document.getElementById('auth-password');
+      const pw2In = document.getElementById('auth-password-confirm');
+      const nickIn = document.getElementById('auth-nick');
+      const emIn = document.getElementById('auth-email');
+      if (pwIn) pwIn.addEventListener('input', () => { updatePasswordStrength(); updatePasswordMatch(); });
+      if (pw2In) pw2In.addEventListener('input', updatePasswordMatch);
+      // Enter key submit
+      [emIn, pwIn, pw2In, nickIn].forEach(el => {
+        if (!el) return;
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitAuth(); } });
+      });
+      const resetEm = document.getElementById('pw-reset-email');
+      if (resetEm) resetEm.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitPasswordReset(); } });
+    } catch (e) { console.warn('[auth-listeners]', e); }
     checkAchievements('init');
 
     // Fade-in при первой загрузке

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Aether Protocol — Test Runner</title>
+<style>
+  body { font-family: 'JetBrains Mono', monospace; background:#06080d; color:#dfe7ee; padding:24px; }
+  h1 { color:#22d3ee; margin-bottom:6px; }
+  h2 { color:#a855f7; margin-top:22px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:4px; }
+  .pass { color:#10b981; }
+  .fail { color:#ef4444; font-weight:bold; }
+  .skip { color:#6b7280; }
+  .meta { color:#94a3b8; font-size:12px; }
+  pre { background:#0b0f17; padding:8px 12px; border-left:2px solid rgba(34,160,122,0.4); margin:6px 0; font-size:12px; }
+  .summary { padding:12px; border:1px solid rgba(34,160,122,0.4); border-radius:4px; margin:12px 0; background:rgba(34,160,122,0.06); }
+  .test-row { padding:3px 0; font-size:13px; }
+  button { background:#22d3ee; color:#000; border:0; padding:8px 16px; cursor:pointer; font-family:inherit; margin-right:8px; }
+  button:hover { background:#0ea5b7; }
+  .tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:9px; margin-right:6px; vertical-align:middle; }
+  .tag-unit { background:#1e3a8a; color:#bfdbfe; }
+  .tag-feature { background:#065f46; color:#a7f3d0; }
+  .tag-regression { background:#92400e; color:#fde68a; }
+  .tag-load { background:#7e22ce; color:#e9d5ff; }
+</style>
+</head>
+<body>
+<h1>⌬ AETHER PROTOCOL — TEST SUITE</h1>
+<div class="meta">Unit · Feature · Regression · Load</div>
+<div>
+  <button onclick="runAll()">▶ ЗАПУСТИТЬ ВСЕ ТЕСТЫ</button>
+  <button onclick="runOnly('unit')">UNIT</button>
+  <button onclick="runOnly('feature')">FEATURE</button>
+  <button onclick="runOnly('regression')">REGRESSION</button>
+  <button onclick="runOnly('load')">LOAD</button>
+</div>
+<div id="results"></div>
+<script src="suite.js?v=20260427b"></script>
+<script>
+  // Auto-run on load
+  window.addEventListener('DOMContentLoaded', () => setTimeout(runAll, 100));
+</script>
+</body>
+</html>
