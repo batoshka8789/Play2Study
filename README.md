@@ -1,6 +1,5 @@
 # Play2Study
 ai procrastination 
-
 ## Database migrations (Alembic)
 
 We included a minimal Alembic setup in the `alembic/` folder. To generate and apply migrations:
@@ -9,14 +8,14 @@ We included a minimal Alembic setup in the `alembic/` folder. To generate and ap
 2. Autogenerate a new revision: `alembic revision --autogenerate -m "describe change"`
 3. Apply migrations: `alembic upgrade head`
 
-The `alembic/env.py` imports SQLAlchemy `Base` from `main.py` to access the metadata.
+The `alembic/env.py` imports SQLAlchemy `Base` from `main.py` to access the metadata. `alembic/env.py` will also respect the `DATABASE_URL` environment variable so CI/deploy can target the correct DB.
 
 ## Backups (cron)
 
 We added `scripts/backup_db.py` which copies the sqlite DB to a timestamped file. Example cron entry (daily at 03:30):
 
 ```
-30 3 * * * /usr/bin/env python3 /path/to/repo/scripts/backup_db.py >> /var/log/play2study_backup.log 2>&1
+30 3 * * * DATABASE_URL="sqlite:///$(pwd)/play2study.db" DB_BACKUP_DIR="/var/backups/play2study" /usr/bin/env python3 /path/to/Play2Study-main/scripts/backup_db.py >> /var/log/play2study_backup.log 2>&1
 ```
 
 Set `DB_BACKUP_DIR` env var to change the backup destination.
@@ -35,4 +34,3 @@ The app will dispatch verification emails to Celery when configured, otherwise i
 ## Health checks
 
 There is a `/health` endpoint that checks database connectivity and Redis availability (best-effort).
-

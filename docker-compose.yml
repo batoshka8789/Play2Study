@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   postgres:
@@ -30,6 +31,7 @@ services:
       - "3000:80"
     depends_on:
       - backend
+
   app:
     build: .
     ports:
