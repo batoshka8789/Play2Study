@@ -1,0 +1,7 @@
+# Cron example: run DB backup every day at 03:30 UTC
+# Edit paths and environment variables as needed.
+
+# m h dom mon dow command
+30 3 * * * DATABASE_URL="sqlite:///$(pwd)/play2study.db" DB_BACKUP_DIR="/var/backups/play2study" /usr/bin/env python3 /path/to/Play2Study-main/scripts/backup_db.py >> /var/log/play2study_backup.log 2>&1
+
+# Or, using systemd-timer or remote backup solutions is recommended for production.

@@ -21,6 +21,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from main import Base  # noqa: E402
 target_metadata = Base.metadata
 
+# Allow DATABASE_URL env var to override alembic.ini sqlalchemy.url
+env_db_url = os.environ.get("DATABASE_URL")
+if env_db_url:
+    # If env var uses sqlite:///path or sqlite:////absolute, keep it as is.
+    config.set_main_option('sqlalchemy.url', env_db_url)
+
 
 def run_migrations_offline():
     url = config.get_main_option("sqlalchemy.url")
