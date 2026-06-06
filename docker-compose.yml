@@ -59,3 +59,22 @@ services:
       - ./deploy/letsencrypt:/etc/letsencrypt
       - ./deploy/certbot_www:/var/www/certbot
     entrypoint: ""
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A celery_app.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - backend
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./:/usr/src/app

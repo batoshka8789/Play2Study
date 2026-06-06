@@ -85,3 +85,30 @@ If you have a domain and want to enable free SSL via Let's Encrypt, a simple doc
 Notes:
 - The compose file mounts `./deploy/letsencrypt` and `./deploy/certbot_www` for cert storage and ACME challenges.
 - Make sure port 80/443 are reachable from the Internet for ACME challenge.
+
+## Redis & Celery (optional)
+
+To run Redis and a Celery worker via docker-compose (useful for background jobs like sending email):
+
+1. Ensure `docker-compose.yml` includes `redis` and `celery` services (already present in this repo).
+2. Export the env var for Redis if needed (docker-compose uses service name):
+
+```
+export REDIS_URL=redis://redis:6379/0
+```
+
+3. Start services:
+
+```
+docker-compose up -d redis backend celery
+```
+
+4. Watch logs:
+
+```
+docker-compose logs -f celery
+```
+
+Notes:
+- Celery worker uses `celery_app.py`. If you want results backend set a proper `CELERY_RESULT_BACKEND` env var.
+- In production you may want to run multiple workers, supervisor, autoscaling, and persistent volumes.
