@@ -36,3 +36,26 @@ services:
     build: .
     ports:
       - "5001:5000"
+
+  # Optional reverse proxy + certbot for production
+  nginx:
+    image: nginx:stable
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/letsencrypt:/etc/letsencrypt
+      - ./deploy/certbot_www:/var/www/certbot
+    depends_on:
+      - backend
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./deploy/letsencrypt:/etc/letsencrypt
+      - ./deploy/certbot_www:/var/www/certbot
+    entrypoint: ""

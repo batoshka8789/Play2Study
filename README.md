@@ -72,3 +72,16 @@ Unit tests were added to validate the Celery fallback behavior (`tests/test_cele
 ## Monitoring and health
 
 The `/health` endpoint checks DB connectivity and Redis availability (best-effort). The repo also includes basic slow-query logging. For production use we recommend adding a process manager (systemd, docker restart policy, or Kubernetes) to automatically restart the app on failures and integrating a monitoring solution (Prometheus + Grafana) to collect metrics.
+
+## Nginx + Certbot (optional)
+
+If you have a domain and want to enable free SSL via Let's Encrypt, a simple docker-compose setup is provided.
+
+1. Edit `deploy/nginx/conf.d/play2study.conf` and replace `example.com` with your domain.
+2. Start containers: `docker-compose up -d nginx backend`
+3. Request a certificate (one-time): `./deploy/get-cert.sh yourdomain.tld`
+4. Renew certificates periodically: `./deploy/renew-cert.sh` (add to cron/systemd timer).
+
+Notes:
+- The compose file mounts `./deploy/letsencrypt` and `./deploy/certbot_www` for cert storage and ACME challenges.
+- Make sure port 80/443 are reachable from the Internet for ACME challenge.
