@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, event
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
 import bcrypt
 from jose import JWTError, jwt
@@ -23,6 +23,8 @@ import random
 import string
 import logging
 import os
+import time
+from typing import Callable
 
 from cache import get_cache
 cache = get_cache()
@@ -68,6 +70,36 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./play2study.db")
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# --- Slow query logging (best-effort) ---
+SLOW_QUERY_THRESHOLD_MS = int(os.environ.get("SLOW_QUERY_THRESHOLD_MS", "200"))
+ENABLE_SLOW_QUERY_EXPLAIN = os.environ.get("SLOW_QUERY_EXPLAIN", "0") == "1"
+
+def _register_slow_query_listeners(engine):
+    @event.listens_for(engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        context._query_start_time = time.time()
+
+    @event.listens_for(engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        try:
+            duration_ms = (time.time() - getattr(context, '_query_start_time', time.time())) * 1000
+            if duration_ms >= SLOW_QUERY_THRESHOLD_MS:
+                logging.warning(f"SLOW QUERY {duration_ms:.1f}ms: {statement} params={parameters}")
+                # Optionally run EXPLAIN ANALYZE for Postgres (best-effort)
+                if ENABLE_SLOW_QUERY_EXPLAIN:
+                    try:
+                        # Only do explain on PG-like connections
+                        conn.exec_driver_sql("SET statement_timeout = 0")
+                        res = conn.execute("EXPLAIN ANALYZE " + statement)
+                        logging.warning("EXPLAIN ANALYZE:\n" + "\n".join([str(r[0]) for r in res]))
+                    except Exception as e:
+                        logging.debug(f"Explain analyze failed: {e}")
+        except Exception:
+            pass
+
+
+_register_slow_query_listeners(engine)
 
 
 class Base(DeclarativeBase):
