@@ -39,6 +39,44 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 app = FastAPI(title="Play2Study API v2")
 
 
+# --- Rate limiter middleware (Redis-backed) ---
+from fastapi import Request
+
+RATE_LIMIT = int(os.environ.get("RATE_LIMIT_PER_MIN", "60"))
+RATE_LIMIT_WINDOW = 60  # seconds
+
+def _get_redis_client():
+    try:
+        from cache import RedisCache
+        url = os.environ.get('REDIS_URL')
+        rc = RedisCache(url)
+        return getattr(rc, 'client', None)
+    except Exception:
+        return None
+
+redis_client = _get_redis_client()
+
+
+@app.middleware("http")
+async def rate_limiter(request: Request, call_next: Callable):
+    # Only limit auth-related endpoints to prevent abuse
+    path = request.url.path
+    if path.startswith('/auth') or path.startswith('/verify'):
+        try:
+            if redis_client:
+                ip = request.client.host
+                key = f"rate:{ip}:{int(time.time() // RATE_LIMIT_WINDOW)}"
+                count = redis_client.incr(key)
+                if count == 1:
+                    redis_client.expire(key, RATE_LIMIT_WINDOW)
+                if count > RATE_LIMIT:
+                    return JSONResponse(status_code=429, content={"detail": "Too many requests"})
+        except Exception:
+            # On any redis error, fail open (allow request)
+            pass
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def ensure_utf8_charset(request, call_next):
     """Ensure responses include 'charset=utf-8' in Content-Type to prevent encoding mojibake."""
@@ -367,6 +405,15 @@ def complete_task(data: TaskComplete, user: User = Depends(get_current_user), db
     if s.points >= s.level * 100:
         s.level += 1
     db.commit()
+    # Invalidate leaderboard cache when points change
+    try:
+        cache_key = "leaderboard_v1"
+        if getattr(cache, 'client', None):
+            cache.client.delete(cache_key)
+        else:
+            cache.set(cache_key, None, ex=0)
+    except Exception:
+        pass
     return {"status": "ok", "points_earned": t.points, "gems_earned": earned_gems}
 
 
@@ -387,6 +434,15 @@ def buy_item(data: BuyItemRequest, user: User = Depends(get_current_user), db: S
         pass  # Тут в будущем будет логика заморозки
 
     db.commit()
+    # Invalidate leaderboard cache when gems/points may have changed
+    try:
+        cache_key = "leaderboard_v1"
+        if getattr(cache, 'client', None):
+            cache.client.delete(cache_key)
+        else:
+            cache.set(cache_key, None, ex=0)
+    except Exception:
+        pass
     return {"status": "ok", "message": "Предмет успешно куплен!"}
 
 
