@@ -29,6 +29,37 @@ from typing import Callable
 from cache import get_cache
 cache = get_cache()
 
+# Load .env in development if present (optional). This is safe: no error if python-dotenv not installed.
+try:
+    from dotenv import load_dotenv
+    # load .env from project root without overwriting existing env vars
+    load_dotenv(override=False)
+except Exception:
+    pass
+
+# Google OAuth via authlib (optional; used if GOOGLE_CLIENT_ID/SECRET set)
+try:
+    from authlib.integrations.starlette_client import OAuth
+    from starlette.config import Config
+    from fastapi import Request
+    from fastapi.responses import RedirectResponse
+    oauth_available = True
+    _config = Config(environ={
+        "GOOGLE_CLIENT_ID": os.getenv("GOOGLE_CLIENT_ID"),
+        "GOOGLE_CLIENT_SECRET": os.getenv("GOOGLE_CLIENT_SECRET"),
+    })
+    oauth = OAuth(_config)
+    oauth.register(
+        name="google",
+        server_metadata_url=(
+            "https://accounts.google.com/"
+            ".well-known/openid-configuration"
+        ),
+        client_kwargs={"scope": "openid email profile"},
+    )
+except Exception:
+    oauth_available = False
+
 # Email sending is optional for tests. We'll import fastapi-mail lazily inside send_email_async
 conf = None
 
@@ -152,6 +183,7 @@ class User(Base):
     hashed_password = Column(String)
     is_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
+    role = Column(String, default="user", nullable=False)
 
 
 class UserStats(Base):
@@ -194,6 +226,7 @@ class AuthRequest(BaseModel):
     password: str
     email: Optional[EmailStr] = None
     register: bool
+    recaptcha_token: Optional[str] = None
 
 
 class TaskComplete(BaseModel):
@@ -221,6 +254,27 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise HTTPException(status_code=401)
     return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if getattr(user, 'role', 'user') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin only")
+    return user
+
+
+def _verify_recaptcha(token: str) -> bool:
+    """Verify reCAPTCHA v3 token via Google's siteverify API. Returns True if score okay."""
+    secret = os.environ.get('RECAPTCHA_SECRET')
+    if not secret or not token:
+        return False
+    try:
+        import requests
+        r = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'secret': secret, 'response': token})
+        j = r.json()
+        # For v3 use score threshold; default accept if success and score >= 0.5
+        return j.get('success', False) and j.get('score', 0) >= float(os.environ.get('RECAPTCHA_SCORE_THRESHOLD', '0.5'))
+    except Exception:
+        return False
 
 
 async def send_email_async(email: str, subject: str, body: str):
@@ -264,6 +318,59 @@ async def send_email_async(email: str, subject: str, body: str):
         print(f"Ошибка отправки письма: {e}")
 
 
+# --- Google OAuth endpoints (Authlib-backed) ---
+@app.get("/auth/google/login")
+async def google_login(request: Request):
+    if not oauth_available:
+        raise HTTPException(503, "Google OAuth not configured")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/auth/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    if not oauth_available:
+        raise HTTPException(503, "Google OAuth not configured")
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        raise HTTPException(400, "Google auth failed")
+
+    info = token.get("userinfo") or token.get("id_token") or {}
+    # Some providers return userinfo, others embed in id_token
+    email = info.get("email") if isinstance(info, dict) else None
+    name = info.get("name") if isinstance(info, dict) else None
+
+    if not email:
+        # Try to decode id_token fallback
+        try:
+            idt = token.get("id_token")
+            from jose import jwt as _jose_jwt
+            decoded = _jose_jwt.decode(idt, options={"verify_signature": False})
+            email = decoded.get("email")
+            name = name or decoded.get("name")
+        except Exception:
+            pass
+
+    if not email:
+        raise HTTPException(400, "Google response missing email")
+
+    # Find or create user
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        username = email.split("@")[0]
+        user = User(username=username, email=email, hashed_password="", is_verified=True, role="user")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    # Issue local JWT
+    jwt_token = jwt.encode({"sub": user.username, "exp": datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)}, SECRET_KEY, algorithm=ALGORITHM)
+    # Redirect to frontend success URL if provided
+    redirect_base = os.getenv("GOOGLE_SUCCESS_REDIRECT", "https://mystartup.kz/auth/success")
+    return RedirectResponse(f"{redirect_base}?token={jwt_token}")
+
+
 def get_rank_name(level: int) -> str:
     if level < 5:
         return "Бронзовая Лига"
@@ -280,6 +387,11 @@ async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session
     if data.register:
         if not data.email:
             raise HTTPException(400, "Email обязателен для регистрации")
+        # Verify recaptcha if token provided
+        if data.recaptcha_token:
+            ok = _verify_recaptcha(data.recaptcha_token)
+            if not ok:
+                raise HTTPException(400, "reCAPTCHA verification failed")
         if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():
             raise HTTPException(400, "Имя пользователя или Email уже заняты")
 
@@ -339,6 +451,82 @@ def verify_email(email: str, code: str, db: Session = Depends(get_db)):
     return {"status": "ok"}
 
 
+@app.post('/auth/firebase')
+def firebase_sign_in(id_token: str, db: Session = Depends(get_db)):
+    """Verify Firebase ID token server-side and return or create local user.
+
+    The frontend should obtain an ID token from Firebase SDK and POST it here.
+    """
+    # Lazy import to avoid hard dependency
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+    except Exception:
+        raise HTTPException(500, "Firebase token verification not available")
+    try:
+        decoded = google_id_token.verify_oauth2_token(id_token, google_requests.Request())
+        # decoded contains 'sub' (uid), 'email'
+        uid = decoded.get('sub')
+        email = decoded.get('email')
+        if not email:
+            raise HTTPException(400, "Token missing email")
+        # find or create local user by email
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(username=email.split('@')[0], email=email, hashed_password='', is_verified=True)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        # create access token mapping to local username
+        access_token = jwt.encode({"sub": user.username, "exp": datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)}, SECRET_KEY, algorithm=ALGORITHM)
+        return {"access_token": access_token, "username": user.username}
+    except Exception as e:
+        raise HTTPException(401, f"Invalid Firebase token: {e}")
+
+
+@app.delete("/admin/users/{uid}")
+def delete_user(uid: int, _=Depends(require_admin), db: Session = Depends(get_db)):
+    db.query(User).filter(User.id == uid).delete()
+    db.commit()
+    return {"status": "deleted"}
+
+
+@app.get("/admin/cache")
+def admin_cache_get(key: str, _=Depends(require_admin)):
+    """Admin-only: peek a cache key's value and TTL (if Redis)."""
+    try:
+        if getattr(cache, 'client', None):
+            raw = cache.client.get(key)
+            ttl = cache.client.ttl(key)
+            return {"key": key, "value": raw and raw or None, "ttl": ttl}
+        else:
+            v = cache.get(key)
+            return {"key": key, "value": v}
+    except Exception as e:
+        raise HTTPException(500, f"Cache read error: {e}")
+
+
+@app.delete("/admin/cache")
+def admin_cache_delete(key: str = None, all: bool = False, _=Depends(require_admin)):
+    """Admin-only: delete specific key or flush all when all=true. Use with caution."""
+    try:
+        if getattr(cache, 'client', None):
+            if all:
+                cache.client.flushdb()
+                return {"status": "flushed"}
+            if key:
+                cache.client.delete(key)
+                return {"status": "deleted", "key": key}
+            raise HTTPException(400, "Specify key or all=true")
+        else:
+            if key:
+                cache.set(key, None, ex=0)
+                return {"status": "deleted", "key": key}
+            raise HTTPException(400, "Specify key when no redis available")
+    except Exception as e:
+        raise HTTPException(500, f"Cache delete error: {e}")
+
+
 @app.post("/forgot-password")
 async def forgot_password(email: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
@@ -387,6 +575,46 @@ def get_tasks(user: User = Depends(get_current_user), db: Session = Depends(get_
     return [{"id": t.id, "title": t.title, "description": t.description, "difficulty": t.difficulty, "points": t.points, "task_type": t.task_type, "completed": t.completed} for t in tasks]
 
 
+@app.get("/profile")
+def get_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return user profile (cached)."""
+    key = f"user_profile:{user.id}"
+    try:
+        cached = cache.get(key)
+        if cached:
+            return cached
+    except Exception:
+        cached = None
+
+    s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
+    profile = {"username": user.username, "email": user.email, "role": user.role, "level": s.level if s else 1}
+    try:
+        cache.set(key, profile, ex=600)  # cache profile 10 minutes
+    except Exception:
+        pass
+    return profile
+
+
+@app.get("/profile/stats")
+def get_profile_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return user stats (cached short-term)."""
+    key = f"user_stats:{user.id}"
+    try:
+        cached = cache.get(key)
+        if cached:
+            return cached
+    except Exception:
+        cached = None
+
+    s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
+    stats = {"level": s.level, "points": s.points, "gems": s.gems, "streak_days": s.streak_days, "completed_tasks": s.completed_tasks}
+    try:
+        cache.set(key, stats, ex=60)  # cache stats 60s
+    except Exception:
+        pass
+    return stats
+
+
 @app.post("/complete_task")
 def complete_task(data: TaskComplete, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     t = db.query(Task).filter(Task.id == data.task_id, Task.user_id == user.id).first()
@@ -412,6 +640,15 @@ def complete_task(data: TaskComplete, user: User = Depends(get_current_user), db
             cache.client.delete(cache_key)
         else:
             cache.set(cache_key, None, ex=0)
+        # Invalidate per-user caches
+        user_stats_key = f"user_stats:{user.id}"
+        user_profile_key = f"user_profile:{user.id}"
+        if getattr(cache, 'client', None):
+            cache.client.delete(user_stats_key)
+            cache.client.delete(user_profile_key)
+        else:
+            cache.set(user_stats_key, None, ex=0)
+            cache.set(user_profile_key, None, ex=0)
     except Exception:
         pass
     return {"status": "ok", "points_earned": t.points, "gems_earned": earned_gems}
@@ -441,6 +678,15 @@ def buy_item(data: BuyItemRequest, user: User = Depends(get_current_user), db: S
             cache.client.delete(cache_key)
         else:
             cache.set(cache_key, None, ex=0)
+        # Invalidate per-user caches
+        user_stats_key = f"user_stats:{user.id}"
+        user_profile_key = f"user_profile:{user.id}"
+        if getattr(cache, 'client', None):
+            cache.client.delete(user_stats_key)
+            cache.client.delete(user_profile_key)
+        else:
+            cache.set(user_stats_key, None, ex=0)
+            cache.set(user_profile_key, None, ex=0)
     except Exception:
         pass
     return {"status": "ok", "message": "Предмет успешно куплен!"}

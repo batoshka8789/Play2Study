@@ -86,6 +86,34 @@ Notes:
 - The compose file mounts `./deploy/letsencrypt` and `./deploy/certbot_www` for cert storage and ACME challenges.
 - Make sure port 80/443 are reachable from the Internet for ACME challenge.
 
+## Secrets & environment variables (recommended)
+
+Keep sensitive values (OAuth client secrets, reCAPTCHA secret, database credentials) out of version control and load them at runtime via environment variables or a secret manager.
+
+Quick options:
+
+- Local development with `.env`:
+	- Copy `.env.example` to `.env` and fill real values. `.env` is included in `.gitignore` so it won't be committed.
+	- The app will automatically load `.env` (if `python-dotenv` is available) when running locally.
+
+- Docker Compose:
+	- Use `env_file: .env` or pass variables via `environment:` in `docker-compose.yml`.
+
+- CI/CD (GitHub Actions):
+	- Store secrets in repository Settings → Secrets → Actions and reference them in workflows as `${{ secrets.SOME_SECRET }}`.
+
+- Production:
+	- Use a secrets manager (HashiCorp Vault, AWS Secrets Manager, Kubernetes Secrets) and avoid plaintext files.
+
+Best practices:
+
+- Do not commit `.env` or any files containing secrets.
+- Use strong random `SECRET_KEY` and rotate it if leaked.
+- When issuing JWTs, prefer short expiry for access tokens and use refresh tokens / rotation in production.
+- Store OAuth client secrets in your cloud provider's secret store and only inject them into runtime environments.
+
+See `.env.example` for a list of variables expected by the app.
+
 ## Redis & Celery (optional)
 
 To run Redis and a Celery worker via docker-compose (useful for background jobs like sending email):
