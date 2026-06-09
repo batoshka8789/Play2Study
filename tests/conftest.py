@@ -43,6 +43,22 @@ def client(test_db_path):
     # Ensure tables are created in the test DB (in case create_all ran earlier with a different DB)
     try:
         main.Base.metadata.create_all(bind=main.engine)
+        # Ensure compatibility: if users.role missing in older test DBs, add it
+        try:
+            conn = main.engine.connect()
+            dialect = main.engine.dialect.name
+            if dialect == 'sqlite':
+                res = conn.execute("PRAGMA table_info('users')").fetchall()
+                cols = [r[1] for r in res]
+                if 'role' not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user' NOT NULL")
+            else:
+                res = conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
+                cols = [r[0] for r in res]
+                if 'role' not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user' NOT NULL")
+        except Exception:
+            pass
     except Exception:
         pass
 
