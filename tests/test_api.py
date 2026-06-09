@@ -12,7 +12,7 @@ def test_root(client):
 
 def test_register_and_verify_and_login_flow(client, test_db_path):
     # Register
-    payload = {"username": "testuser", "password": "TestPass123", "email": "test@example.com", "register": True}
+    payload = {"username": "testuser", "password": "TestPass123!", "email": "test@example.com", "register": True}
     r = client.post("/auth", json=payload)
     assert r.status_code == 200
     assert r.json()["status"] == "needs_verification"
@@ -32,7 +32,7 @@ def test_register_and_verify_and_login_flow(client, test_db_path):
     assert r.json()["status"] == "ok"
 
     # Login
-    r = client.post("/auth", json={"username": "testuser", "password": "TestPass123", "register": False})
+    r = client.post("/auth", json={"username": "testuser", "password": "TestPass123!", "register": False})
     assert r.status_code == 200
     token = r.json().get("access_token")
     assert token
@@ -46,7 +46,7 @@ def test_register_and_verify_and_login_flow(client, test_db_path):
 
 def test_task_flow_and_buy(client, test_db_path):
     # Register another user
-    payload = {"username": "taskuser", "password": "TaskPass123", "email": "task@example.com", "register": True}
+    payload = {"username": "taskuser", "password": "TaskPass123!", "email": "task@example.com", "register": True}
     r = client.post("/auth", json=payload)
     assert r.status_code == 200
 
@@ -62,7 +62,7 @@ def test_task_flow_and_buy(client, test_db_path):
     assert r.status_code == 200
 
     # Login
-    r = client.post("/auth", json={"username": "taskuser", "password": "TaskPass123", "register": False})
+    r = client.post("/auth", json={"username": "taskuser", "password": "TaskPass123!", "register": False})
     token = r.json().get("access_token")
     headers = {"Authorization": f"Bearer {token}"}
 

@@ -3,7 +3,7 @@ import pytest
 
 
 def test_duplicate_registration(client, test_db_path):
-    payload = {"username": "dupuser", "password": "DupPass1", "email": "dup@example.com", "register": True}
+    payload = {"username": "dupuser", "password": "DupPass1!", "email": "dup@example.com", "register": True}
     r = client.post("/auth", json=payload)
     assert r.status_code == 200
 
@@ -13,7 +13,7 @@ def test_duplicate_registration(client, test_db_path):
 
 
 def test_invalid_verify_code(client):
-    payload = {"username": "invuser", "password": "InvPass1", "email": "inv@example.com", "register": True}
+    payload = {"username": "invuser", "password": "InvPass1!", "email": "inv@example.com", "register": True}
     r = client.post("/auth", json=payload)
     assert r.status_code == 200
 
@@ -23,7 +23,7 @@ def test_invalid_verify_code(client):
 
 
 def test_forgot_and_reset_password(client, test_db_path):
-    payload = {"username": "resetuser", "password": "ResetPass1", "email": "reset@example.com", "register": True}
+    payload = {"username": "resetuser", "password": "ResetPass1!", "email": "reset@example.com", "register": True}
     r = client.post("/auth", json=payload)
     assert r.status_code == 200
     # fetch code from DB

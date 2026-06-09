@@ -55,7 +55,7 @@ def complete_task(client: TestClient, headers: dict, task_id: int):
 
 
 def test_level_up_boundary(client, test_db_path):
-    user_id, headers = register_and_login(client, test_db_path, "lvluser", "lvl@example.com", "Pwd12345")
+    user_id, headers = register_and_login(client, test_db_path, "lvluser", "lvl@example.com", "Pwd12345!")
 
     # set points to 99 for level 1 so that +1 triggers level up
     conn = sqlite3.connect(test_db_path)
@@ -73,7 +73,7 @@ def test_level_up_boundary(client, test_db_path):
 
 
 def test_gems_awarding_accuracy(client, test_db_path):
-    user_id, headers = register_and_login(client, test_db_path, "gemuser", "gem@example.com", "Pwd12345")
+    user_id, headers = register_and_login(client, test_db_path, "gemuser", "gem@example.com", "Pwd12345!")
 
     baseline = get_stats(client, headers)["gems"]
     cases = [ (5, 1), (10, 1), (20, 2), (99, 9) ]

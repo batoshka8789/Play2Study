@@ -300,6 +300,27 @@ def _verify_recaptcha(token: str) -> bool:
         return False
 
 
+def _validate_password(password: str) -> None:
+    """Validate password complexity.
+
+    Requirements:
+    - at least 6 characters
+    - at least one digit
+    - at least one uppercase letter
+    - at least one special character (non-alphanumeric)
+    Raises HTTPException(400) if validation fails.
+    """
+    if not password or len(password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен содержать минимум 6 символов")
+    import re
+    if not re.search(r"\d", password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
+    if not re.search(r"[A-ZА-ЯЁ]", password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну заглавную букву")
+    if not re.search(r"[^0-9A-Za-zА-Яа-яёЁ]", password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ")
+
+
 async def send_email_async(email: str, subject: str, body: str):
     """Send email asynchronously if fastapi-mail is available. Otherwise, no-op (useful for tests).
 
@@ -415,6 +436,8 @@ async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session
             ok = _verify_recaptcha(data.recaptcha_token)
             if not ok:
                 raise HTTPException(400, "reCAPTCHA verification failed")
+        # Validate password complexity
+        _validate_password(data.password)
         if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():
             raise HTTPException(400, "Имя пользователя или Email уже заняты")
 

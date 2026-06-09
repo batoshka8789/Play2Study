@@ -5847,8 +5847,14 @@ body.au-fade-in #app, body.au-fade-in #cmd-dock {
       <div class="field">
         <label>PASSWORD <span class="pw-strength" id="pw-strength-label"></span></label>
         <div class="pw-wrap">
-          <input type="password" id="auth-password" placeholder="Минимум 6 символов" autocomplete="current-password">
-          <button type="button" class="pw-toggle" id="pw-toggle-1" onclick="togglePwVis('auth-password','pw-toggle-1')" title="Показать">👁</button>
+          <input
+            type="password"
+            id="auth-password"
+            placeholder="Мин. 6 символов, 1 заглавная буква, 1 цифра, 1 знак"
+            autocomplete="current-password"
+            minlength="6"
+            title="Пароль должен содержать минимум 6 символов, 1 заглавную букву, 1 цифру и 1 специальный символ"
+          >
         </div>
         <div class="pw-strength-bar" id="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
       </div>
@@ -7510,6 +7516,15 @@ async function submitAuth() {
   if (authInFlight) return;
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
+
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
+
+  if (!passwordRegex.test(password)) {
+    alert(
+      "Пароль должен содержать минимум 6 символов, 1 заглавную букву, 1 цифру и 1 специальный символ."
+    );
+    return;
+  }
   if (!email || !password) { setAuthError('Введите email и пароль.'); return; }
 
   if (email.toLowerCase() === OFFLINE_ADMIN.email && password === OFFLINE_ADMIN.password) {
