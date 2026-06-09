@@ -211,6 +211,29 @@ class Task(Base):
 
 Base.metadata.create_all(bind=engine)
 
+# Ensure older databases (created before adding `role`) get the column at runtime.
+def _ensure_role_column(engine):
+    try:
+        dialect = engine.dialect.name
+        if dialect == 'sqlite':
+            # pragma table_info to list columns
+            res = engine.execute("PRAGMA table_info('users')").fetchall()
+            cols = [r[1] for r in res]
+            if 'role' not in cols:
+                engine.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user' NOT NULL")
+        else:
+            # Postgres / others
+            res = engine.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
+            cols = [r[0] for r in res]
+            if 'role' not in cols:
+                engine.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user' NOT NULL")
+    except Exception:
+        # best-effort; if it fails, rely on migrations
+        pass
+
+
+_ensure_role_column(engine)
+
 
 def get_db():
     db = SessionLocal()
