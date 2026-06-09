@@ -1,13 +1,3 @@
-"""Play2Study FastAPI application (merged, cleaned).
-
-This file was updated to resolve merge conflicts. It keeps the following behaviors:
-- DATABASE_URL read from env (fallback to local sqlite)
-- UTF-8 response middleware
-- lazy email sending using fastapi-mail when available; no hardcoded credentials
-- Celery task invocation fallback to background task
-- leaderboard caching via cache abstraction (if available)
-"""
-
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
@@ -294,8 +284,8 @@ def _verify_recaptcha(token: str) -> bool:
         import requests
         r = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'secret': secret, 'response': token})
         j = r.json()
-        # For v3 use score threshold; default accept if success and score >= 0.5
-        return j.get('success', False) and j.get('score', 0) >= float(os.environ.get('RECAPTCHA_SCORE_THRESHOLD', '0.5'))
+        threshold = float(os.environ.get('RECAPTCHA_SCORE_THRESHOLD', '0.5'))
+        return j.get('success', False) and j.get('score', 0) >= threshold
     except Exception:
         return False
 
@@ -428,14 +418,15 @@ def get_rank_name(level: int) -> str:
 # --- AUTH ENDPOINTS ---
 @app.post("/auth")
 async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    if not data.recaptcha_token:
+        raise HTTPException(400, "reCAPTCHA token is required")
+
+    if not _verify_recaptcha(data.recaptcha_token):
+        raise HTTPException(400, "reCAPTCHA verification failed")
+
     if data.register:
         if not data.email:
             raise HTTPException(400, "Email обязателен для регистрации")
-        # Verify recaptcha if token provided
-        if data.recaptcha_token:
-            ok = _verify_recaptcha(data.recaptcha_token)
-            if not ok:
-                raise HTTPException(400, "reCAPTCHA verification failed")
         # Validate password complexity
         _validate_password(data.password)
         if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():
@@ -664,7 +655,7 @@ def get_profile_stats(user: User = Depends(get_current_user), db: Session = Depe
 @app.post("/complete_task")
 def complete_task(data: TaskComplete, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     t = db.query(Task).filter(Task.id == data.task_id, Task.user_id == user.id).first()
-    if not t or t.completed:
+    if not t or not t.completed:
         raise HTTPException(400, "Ошибка задачи")
 
     t.completed = True
