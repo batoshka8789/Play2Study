@@ -31,4 +31,13 @@ jobs:
 
       - name: Run tests
         run: |
+          # Give services (Redis) a moment to start
+          sleep 5
           python -m pytest -q
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    env:
+      REDIS_URL: redis://localhost:6379/0
