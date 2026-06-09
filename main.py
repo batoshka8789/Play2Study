@@ -418,11 +418,15 @@ def get_rank_name(level: int) -> str:
 # --- AUTH ENDPOINTS ---
 @app.post("/auth")
 async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    if not data.recaptcha_token:
-        raise HTTPException(400, "reCAPTCHA token is required")
+    secret = os.environ.get('RECAPTCHA_SECRET')
+    
+    # Проверяем капчу ТОЛЬКО если в .env прописан настоящий секрет (не заглушка)
+    if secret and secret != "your-recaptcha-secret":
+        if not data.recaptcha_token:
+            raise HTTPException(400, "reCAPTCHA token is required")
 
-    if not _verify_recaptcha(data.recaptcha_token):
-        raise HTTPException(400, "reCAPTCHA verification failed")
+        if not _verify_recaptcha(data.recaptcha_token):
+            raise HTTPException(400, "reCAPTCHA verification failed")
 
     if data.register:
         if not data.email:
