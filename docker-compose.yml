@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   postgres:
@@ -30,8 +31,50 @@ services:
       - "3000:80"
     depends_on:
       - backend
-services:
+
   app:
     build: .
     ports:
       - "5001:5000"
+
+  # Optional reverse proxy + certbot for production
+  nginx:
+    image: nginx:stable
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/letsencrypt:/etc/letsencrypt
+      - ./deploy/certbot_www:/var/www/certbot
+    depends_on:
+      - backend
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./deploy/letsencrypt:/etc/letsencrypt
+      - ./deploy/certbot_www:/var/www/certbot
+    entrypoint: ""
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A celery_app.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - backend
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./:/usr/src/app

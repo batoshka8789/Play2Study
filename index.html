@@ -12,6 +12,7 @@
 <meta name="theme-color" content="#10B981">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<base href="./frontend/">
 <link rel="manifest" href="manifest.json">
 <!-- PostHog Analytics -->
 <script>
@@ -46,8 +47,6 @@
   --violet-border: rgba(99,102,241,0.3);
   --crimson: #EF4444;
   --crimson-glow: rgba(239,68,68,0.15);
-  </div>
-
   <script src="app.js" defer></script>
   text-transform: uppercase; transition: all 0.15s;
   background: transparent; border: 1px solid;
@@ -12679,6 +12678,15 @@ document.addEventListener('DOMContentLoaded', init);
   };
 })();
 </script>
-
+ <script src="https://www.google.com/recaptcha/api.js"></script>
+  <script>
+   function onSubmit(token) {
+     document.getElementById("demo-form").submit();
+   }
+ </script>
+ <button class="g-recaptcha" 
+        data-sitekey="reCAPTCHA_site_key" 
+        data-callback='onSubmit' 
+        data-action='submit'>Submit</button>
 </body>
 </html>

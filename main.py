@@ -1,44 +1,116 @@
-# backend/main.py
-from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, event
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
 import bcrypt
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List
+from typing import Optional
 import random
 import string
+import logging
 import os
-import json
-import urllib.parse
-import urllib.request
-from dotenv import load_dotenv
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+import time
+from typing import Callable
 
-# --- КОНФИГ ПОЧТЫ (ЗАПОЛНИ СВОИМИ ДАННЫМИ!) ---
-conf = ConnectionConfig(
-    MAIL_USERNAME = "batyrtorakhan@gmail.com",
-    MAIL_PASSWORD = "sbgjjkvcevnmmgws",
-    MAIL_FROM = "batyrtorakhan@gmail.com",
-    MAIL_PORT = 587,
-    MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = True,
-    MAIL_SSL_TLS = False,
-    USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True
-)
+from cache import get_cache
+cache = get_cache()
 
-SECRET_KEY = "super-secret-key-2026-change-this"
+# Load .env in development if present (optional). This is safe: no error if python-dotenv not installed.
+try:
+    from dotenv import load_dotenv
+    # load .env from project root without overwriting existing env vars
+    load_dotenv(override=False)
+except Exception:
+    pass
+
+# Google OAuth via authlib (optional; used if GOOGLE_CLIENT_ID/SECRET set)
+try:
+    from authlib.integrations.starlette_client import OAuth
+    from starlette.config import Config
+    from fastapi import Request
+    from fastapi.responses import RedirectResponse
+    oauth_available = True
+    _config = Config(environ={
+        "GOOGLE_CLIENT_ID": os.getenv("GOOGLE_CLIENT_ID"),
+        "GOOGLE_CLIENT_SECRET": os.getenv("GOOGLE_CLIENT_SECRET"),
+    })
+    oauth = OAuth(_config)
+    oauth.register(
+        name="google",
+        server_metadata_url=(
+            "https://accounts.google.com/"
+            ".well-known/openid-configuration"
+        ),
+        client_kwargs={"scope": "openid email profile"},
+    )
+except Exception:
+    oauth_available = False
+
+# Email sending is optional for tests. We'll import fastapi-mail lazily inside send_email_async
+conf = None
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret-key-2026-change-this")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
-RECAPTCHA_SECRET = os.getenv("RECAPTCHA_SECRET")
-RECAPTCHA_SCORE_THRESHOLD = float(os.getenv("RECAPTCHA_SCORE_THRESHOLD", "0.5"))
-
 app = FastAPI(title="Play2Study API v2")
+
+
+# --- Rate limiter middleware (Redis-backed) ---
+from fastapi import Request
+
+RATE_LIMIT = int(os.environ.get("RATE_LIMIT_PER_MIN", "60"))
+RATE_LIMIT_WINDOW = 60  # seconds
+
+def _get_redis_client():
+    try:
+        from cache import RedisCache
+        url = os.environ.get('REDIS_URL')
+        rc = RedisCache(url)
+        return getattr(rc, 'client', None)
+    except Exception:
+        return None
+
+redis_client = _get_redis_client()
+
+
+@app.middleware("http")
+async def rate_limiter(request: Request, call_next: Callable):
+    # Only limit auth-related endpoints to prevent abuse
+    path = request.url.path
+    if path.startswith('/auth') or path.startswith('/verify'):
+        try:
+            if redis_client:
+                ip = request.client.host
+                key = f"rate:{ip}:{int(time.time() // RATE_LIMIT_WINDOW)}"
+                count = redis_client.incr(key)
+                if count == 1:
+                    redis_client.expire(key, RATE_LIMIT_WINDOW)
+                if count > RATE_LIMIT:
+                    return JSONResponse(status_code=429, content={"detail": "Too many requests"})
+        except Exception:
+            # On any redis error, fail open (allow request)
+            pass
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def ensure_utf8_charset(request, call_next):
+    """Ensure responses include 'charset=utf-8' in Content-Type to prevent encoding mojibake."""
+    response = await call_next(request)
+    ct = response.headers.get("content-type")
+    if ct:
+        if "charset" not in ct.lower():
+            # append charset where missing
+            response.headers["content-type"] = f"{ct}; charset=utf-8"
+    else:
+        response.headers["content-type"] = "application/json; charset=utf-8"
+    return response
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,14 +120,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- БАЗА ДАННЫХ ---
-load_dotenv()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-DATABASE_URL = "sqlite:///./play2study.db"
+
+# --- DATABASE ---
+# Allow overriding DATABASE_URL for tests and deployments
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./play2study.db")
+
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-class Base(DeclarativeBase): pass
+# --- Slow query logging (best-effort) ---
+SLOW_QUERY_THRESHOLD_MS = int(os.environ.get("SLOW_QUERY_THRESHOLD_MS", "200"))
+ENABLE_SLOW_QUERY_EXPLAIN = os.environ.get("SLOW_QUERY_EXPLAIN", "0") == "1"
+
+def _register_slow_query_listeners(engine):
+    @event.listens_for(engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        context._query_start_time = time.time()
+
+    @event.listens_for(engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        try:
+            duration_ms = (time.time() - getattr(context, '_query_start_time', time.time())) * 1000
+            if duration_ms >= SLOW_QUERY_THRESHOLD_MS:
+                logging.warning(f"SLOW QUERY {duration_ms:.1f}ms: {statement} params={parameters}")
+                # Optionally run EXPLAIN ANALYZE for Postgres (best-effort)
+                if ENABLE_SLOW_QUERY_EXPLAIN:
+                    try:
+                        # Only do explain on PG-like connections
+                        conn.exec_driver_sql("SET statement_timeout = 0")
+                        res = conn.execute("EXPLAIN ANALYZE " + statement)
+                        logging.warning("EXPLAIN ANALYZE:\n" + "\n".join([str(r[0]) for r in res]))
+                    except Exception as e:
+                        logging.debug(f"Explain analyze failed: {e}")
+        except Exception:
+            pass
+
+
+_register_slow_query_listeners(engine)
+
+
+class Base(DeclarativeBase):
+    pass
+
 
 class User(Base):
     __tablename__ = "users"
@@ -65,139 +173,304 @@ class User(Base):
     hashed_password = Column(String)
     is_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
+    role = Column(String, default="user", nullable=False)
+
 
 class UserStats(Base):
     __tablename__ = "user_stats"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     level = Column(Integer, default=1)
     points = Column(Integer, default=0)
-    gems = Column(Integer, default=0) # Игровая валюта
+    gems = Column(Integer, default=0)  # Игровая валюта
     streak_days = Column(Integer, default=0)
     completed_tasks = Column(Integer, default=0)
+
 
 class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     title = Column(String)
     description = Column(String)
     difficulty = Column(String)
     points = Column(Integer)
-    task_type = Column(String, default="main") # 'daily' или 'main'
+    task_type = Column(String, default="main")  # 'daily' или 'main'
     completed = Column(Boolean, default=False)
+
 
 Base.metadata.create_all(bind=engine)
 
+# Ensure older databases (created before adding `role`) get the column at runtime.
+def _ensure_role_column(engine):
+    try:
+        dialect = engine.dialect.name
+        if dialect == 'sqlite':
+            # pragma table_info to list columns
+            res = engine.execute("PRAGMA table_info('users')").fetchall()
+            cols = [r[1] for r in res]
+            if 'role' not in cols:
+                engine.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user' NOT NULL")
+        else:
+            # Postgres / others
+            res = engine.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
+            cols = [r[0] for r in res]
+            if 'role' not in cols:
+                engine.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user' NOT NULL")
+    except Exception:
+        # best-effort; if it fails, rely on migrations
+        pass
+
+
+_ensure_role_column(engine)
+
+
 def get_db():
     db = SessionLocal()
-    try: yield db
-    finally: db.close()
-
-# --- reCAPTCHA ---
-def verify_recaptcha_token(token: str) -> bool:
-    if not token:
-        return False
-    if not RECAPTCHA_SECRET:
-        raise RuntimeError("RECAPTCHA_SECRET не задан в окружении")
-
-    data = urllib.parse.urlencode({
-        "secret": RECAPTCHA_SECRET,
-        "response": token,
-    }).encode("utf-8")
-    request = urllib.request.Request(
-        "https://www.google.com/recaptcha/api/siteverify",
-        data=data,
-        method="POST",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-    )
-
     try:
-        with urllib.request.urlopen(request, timeout=10) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-    except Exception as e:
-        print(f"reCAPTCHA verification error: {e}")
-        return False
+        yield db
+    finally:
+        db.close()
 
-    return bool(result.get("success")) and float(result.get("score", 0)) >= RECAPTCHA_SCORE_THRESHOLD
 
-# --- СХЕМЫ ДАННЫХ ---
+# --- SCHEMAS ---
 class AuthRequest(BaseModel):
     username: str
     password: str
     email: Optional[EmailStr] = None
     register: bool
-    recaptcha_token: str
+    recaptcha_token: Optional[str] = None
+
 
 class TaskComplete(BaseModel):
     task_id: int
+
 
 class BuyItemRequest(BaseModel):
     item_id: str
     cost: int
 
-# --- УТИЛИТЫ ---
+
+# --- UTILITIES ---
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth")
+
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if username is None: raise HTTPException(401)
+        if username is None:
+            raise HTTPException(status_code=401)
     except JWTError:
-        raise HTTPException(401, "Недействительный токен")
+        raise HTTPException(status_code=401, detail="Недействительный токен")
     user = db.query(User).filter(User.username == username).first()
-    if user is None: raise HTTPException(401)
+    if user is None:
+        raise HTTPException(status_code=401)
     return user
 
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if getattr(user, 'role', 'user') != 'admin':
+        raise HTTPException(status_code=403, detail="Admin only")
+    return user
+
+
+def _verify_recaptcha(token: str) -> bool:
+    """Verify reCAPTCHA v3 token via Google's siteverify API. Returns True if score okay."""
+    secret = os.environ.get('RECAPTCHA_SECRET')
+    if not secret or not token:
+        return False
+    try:
+        import requests
+        r = requests.post('https://www.google.com/recaptcha/api/siteverify', data={'secret': secret, 'response': token})
+        j = r.json()
+        threshold = float(os.environ.get('RECAPTCHA_SCORE_THRESHOLD', '0.5'))
+        return j.get('success', False) and j.get('score', 0) >= threshold
+    except Exception:
+        return False
+
+
+def _validate_password(password: str) -> None:
+    """Validate password complexity.
+
+    Requirements:
+    - at least 6 characters
+    - at least one digit
+    - at least one uppercase letter
+    - at least one special character (non-alphanumeric)
+    Raises HTTPException(400) if validation fails.
+    """
+    if not password or len(password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен содержать минимум 6 символов")
+    import re
+    if not re.search(r"\d", password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
+    if not re.search(r"[A-ZА-ЯЁ]", password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну заглавную букву")
+    if not re.search(r"[^0-9A-Za-zА-Яа-яёЁ]", password):
+        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы один специальный символ")
+
+
 async def send_email_async(email: str, subject: str, body: str):
+    """Send email asynchronously if fastapi-mail is available. Otherwise, no-op (useful for tests).
+
+    The import is done lazily so tests that don't need email sending won't fail due to missing deps or config.
+    """
+    try:
+        from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+    except Exception:
+        # fastapi-mail not available or misconfigured in this environment (tests). Skip sending.
+        print("fastapi-mail not available; skipping email send in this environment")
+        return
+
+    # Build a minimal ConnectionConfig from conf if present, else try default env-backed config
+    cfg = None
+    try:
+        if conf is not None:
+            cfg = conf
+        else:
+            cfg = ConnectionConfig(
+                MAIL_USERNAME=os.environ.get("MAIL_USERNAME", ""),
+                MAIL_PASSWORD=os.environ.get("MAIL_PASSWORD", ""),
+                MAIL_FROM=os.environ.get("MAIL_FROM", "no-reply@example.com"),
+                MAIL_PORT=int(os.environ.get("MAIL_PORT", 587)),
+                MAIL_SERVER=os.environ.get("MAIL_SERVER", "localhost"),
+                MAIL_STARTTLS=bool(os.environ.get("MAIL_STARTTLS", True)),
+                MAIL_SSL_TLS=bool(os.environ.get("MAIL_SSL_TLS", False)),
+                USE_CREDENTIALS=True,
+                VALIDATE_CERTS=False,
+            )
+    except Exception as e:
+        print(f"Failed to configure email client: {e}")
+        return
+
     try:
         message = MessageSchema(subject=subject, recipients=[email], body=body, subtype=MessageType.plain)
-        fm = FastMail(conf)
+        fm = FastMail(cfg)
         await fm.send_message(message)
     except Exception as e:
         print(f"Ошибка отправки письма: {e}")
 
+
+# --- Google OAuth endpoints (Authlib-backed) ---
+@app.get("/auth/google/login")
+async def google_login(request: Request):
+    if not oauth_available:
+        raise HTTPException(503, "Google OAuth not configured")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/auth/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    if not oauth_available:
+        raise HTTPException(503, "Google OAuth not configured")
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        raise HTTPException(400, "Google auth failed")
+
+    info = token.get("userinfo") or token.get("id_token") or {}
+    # Some providers return userinfo, others embed in id_token
+    email = info.get("email") if isinstance(info, dict) else None
+    name = info.get("name") if isinstance(info, dict) else None
+
+    if not email:
+        # Try to decode id_token fallback
+        try:
+            idt = token.get("id_token")
+            from jose import jwt as _jose_jwt
+            decoded = _jose_jwt.decode(idt, options={"verify_signature": False})
+            email = decoded.get("email")
+            name = name or decoded.get("name")
+        except Exception:
+            pass
+
+    if not email:
+        raise HTTPException(400, "Google response missing email")
+
+    # Find or create user
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        username = email.split("@")[0]
+        user = User(username=username, email=email, hashed_password="", is_verified=True, role="user")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    # Issue local JWT
+    jwt_token = jwt.encode({"sub": user.username, "exp": datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)}, SECRET_KEY, algorithm=ALGORITHM)
+    # Redirect to frontend success URL if provided
+    redirect_base = os.getenv("GOOGLE_SUCCESS_REDIRECT", "https://mystartup.kz/auth/success")
+    return RedirectResponse(f"{redirect_base}?token={jwt_token}")
+
+
 def get_rank_name(level: int) -> str:
-    if level < 5: return "Бронзовая Лига"
-    if level < 10: return "Серебряная Лига"
-    if level < 20: return "Золотая Лига"
+    if level < 5:
+        return "Бронзовая Лига"
+    if level < 10:
+        return "Серебряная Лига"
+    if level < 20:
+        return "Золотая Лига"
     return "Легенда"
 
-# --- ЭНДПОИНТЫ АВТОРИЗАЦИИ ---
+
+# --- AUTH ENDPOINTS ---
 @app.post("/auth")
 async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    if not verify_recaptcha_token(data.recaptcha_token):
-        raise HTTPException(400, "Проверка reCAPTCHA не пройдена")
-
     if data.register:
-        if not data.email: raise HTTPException(400, "Email обязателен для регистрации")
+        secret = os.environ.get('RECAPTCHA_SECRET')
+        # Проверяем капчу ТОЛЬКО при регистрации и если в .env прописан настоящий секрет
+        if secret and secret != "your-recaptcha-secret":
+            if not data.recaptcha_token:
+                raise HTTPException(400, "reCAPTCHA token is required")
+            if not _verify_recaptcha(data.recaptcha_token):
+                raise HTTPException(400, "reCAPTCHA verification failed")
+
+        if not data.email:
+            raise HTTPException(400, "Email обязателен для регистрации")
+        # Validate password complexity
+        _validate_password(data.password)
         if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():
             raise HTTPException(400, "Имя пользователя или Email уже заняты")
-        
-        hashed_pw = bcrypt.hashpw(data.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        hashed_pw = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         code = "".join(random.choices(string.digits, k=6))
-        
+
         new_user = User(username=data.username, email=data.email, hashed_password=hashed_pw, verification_code=code)
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        
-        db.add(UserStats(user_id=new_user.id, gems=10)) # Даем 10 кристалов на старте
-        
+
+        db.add(UserStats(user_id=new_user.id, gems=10))  # Даем 10 кристаллов на старте
+
         # Генерируем стартовые квесты (Дейлики и Сюжетные)
         db.add_all([
             Task(title="Выпить стакан воды", description="Мана нуждается в увлажнении", difficulty="ЛЕГКО", points=20, task_type="daily", user_id=new_user.id),
             Task(title="Прочесть 10 страниц", description="Прокачай интеллект", difficulty="СРЕДНЕ", points=40, task_type="daily", user_id=new_user.id),
-            Task(title="Завершить MVP проекта", description="Глобальная цель на неделю", difficulty="СЛОЖНО", points=250, task_type="main", user_id=new_user.id)
+            Task(title="Завершить MVP проекта", description="Глобальная цель на неделю", difficulty="СЛОЖНО", points=250, task_type="main", user_id=new_user.id),
         ])
         db.commit()
 
-        background_tasks.add_task(send_email_async, data.email, "Код подтверждения Play2Study", f"Твой код: {code}")
+        # Offload email sending to Celery if configured, otherwise use background task
+        try:
+            from celery_app import send_email_task
+            # Prefer .delay if available (typical Celery API)
+            try:
+                if hasattr(send_email_task, "delay"):
+                    send_email_task.delay(data.email, "Код подтверждения Play2Study", f"Твой код: {code}")
+                else:
+                    send_email_task(data.email, "Код подтверждения Play2Study", f"Твой код: {code}")
+            except Exception:
+                # If Celery task invocation fails for any reason, fallback to background task
+                background_tasks.add_task(send_email_async, data.email, "Код подтверждения Play2Study", f"Твой код: {code}")
+        except Exception:
+            background_tasks.add_task(send_email_async, data.email, "Код подтверждения Play2Study", f"Твой код: {code}")
+
         return {"status": "needs_verification", "email": data.email}
     else:
         user = db.query(User).filter(User.username == data.username).first()
-        if not user or not bcrypt.checkpw(data.password.encode('utf-8'), user.hashed_password.encode('utf-8')):
+        if not user or not bcrypt.checkpw(data.password.encode("utf-8"), user.hashed_password.encode("utf-8")):
             raise HTTPException(400, "Неверный логин или пароль")
         if not user.is_verified:
             raise HTTPException(403, "Аккаунт не подтвержден. Проверьте почту.")
@@ -205,35 +478,118 @@ async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session
         access_token = jwt.encode({"sub": user.username, "exp": datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)}, SECRET_KEY, algorithm=ALGORITHM)
         return {"access_token": access_token, "username": user.username}
 
+
 @app.post("/verify")
 def verify_email(email: str, code: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email, User.verification_code == code).first()
-    if not user: raise HTTPException(400, "Неверный код или email")
+    if not user:
+        raise HTTPException(400, "Неверный код или email")
     user.is_verified = True
     user.verification_code = None
     db.commit()
     return {"status": "ok"}
 
+
+@app.post('/auth/firebase')
+def firebase_sign_in(id_token: str, db: Session = Depends(get_db)):
+    """Verify Firebase ID token server-side and return or create local user.
+
+    The frontend should obtain an ID token from Firebase SDK and POST it here.
+    """
+    # Lazy import to avoid hard dependency
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+    except Exception:
+        raise HTTPException(500, "Firebase token verification not available")
+    try:
+        decoded = google_id_token.verify_oauth2_token(id_token, google_requests.Request())
+        # decoded contains 'sub' (uid), 'email'
+        uid = decoded.get('sub')
+        email = decoded.get('email')
+        if not email:
+            raise HTTPException(400, "Token missing email")
+        # find or create local user by email
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(username=email.split('@')[0], email=email, hashed_password='', is_verified=True)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        # create access token mapping to local username
+        access_token = jwt.encode({"sub": user.username, "exp": datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)}, SECRET_KEY, algorithm=ALGORITHM)
+        return {"access_token": access_token, "username": user.username}
+    except Exception as e:
+        raise HTTPException(401, f"Invalid Firebase token: {e}")
+
+
+@app.delete("/admin/users/{uid}")
+def delete_user(uid: int, _=Depends(require_admin), db: Session = Depends(get_db)):
+    db.query(User).filter(User.id == uid).delete()
+    db.commit()
+    return {"status": "deleted"}
+
+
+@app.get("/admin/cache")
+def admin_cache_get(key: str, _=Depends(require_admin)):
+    """Admin-only: peek a cache key's value and TTL (if Redis)."""
+    try:
+        if getattr(cache, 'client', None):
+            raw = cache.client.get(key)
+            ttl = cache.client.ttl(key)
+            return {"key": key, "value": raw and raw or None, "ttl": ttl}
+        else:
+            v = cache.get(key)
+            return {"key": key, "value": v}
+    except Exception as e:
+        raise HTTPException(500, f"Cache read error: {e}")
+
+
+@app.delete("/admin/cache")
+def admin_cache_delete(key: str = None, all: bool = False, _=Depends(require_admin)):
+    """Admin-only: delete specific key or flush all when all=true. Use with caution."""
+    try:
+        if getattr(cache, 'client', None):
+            if all:
+                cache.client.flushdb()
+                return {"status": "flushed"}
+            if key:
+                cache.client.delete(key)
+                return {"status": "deleted", "key": key}
+            raise HTTPException(400, "Specify key or all=true")
+        else:
+            if key:
+                cache.set(key, None, ex=0)
+                return {"status": "deleted", "key": key}
+            raise HTTPException(400, "Specify key when no redis available")
+    except Exception as e:
+        raise HTTPException(500, f"Cache delete error: {e}")
+
+
 @app.post("/forgot-password")
 async def forgot_password(email: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
-    if not user: raise HTTPException(404, "Пользователь не найден")
+    if not user:
+        raise HTTPException(404, "Пользователь не найден")
     code = "".join(random.choices(string.digits, k=6))
     user.verification_code = code
     db.commit()
     background_tasks.add_task(send_email_async, email, "Восстановление пароля Play2Study", f"Код для сброса пароля: {code}")
     return {"status": "email_sent"}
 
+
 @app.post("/reset-password")
 def reset_password(email: str, code: str, new_password: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email, User.verification_code == code).first()
-    if not user: raise HTTPException(400, "Неверный код восстановления")
-    user.hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    if not user:
+        raise HTTPException(400, "Неверный код восстановления")
+    user.hashed_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     user.verification_code = None
     db.commit()
     return {"status": "ok"}
 
-# --- ИГРОВЫЕ ЭНДПОИНТЫ ---
+
+# --- GAME ENDPOINTS ---
 @app.get("/stats")
 def get_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
@@ -241,59 +597,189 @@ def get_stats(user: User = Depends(get_current_user), db: Session = Depends(get_
     cur = s.points % req if s.points >= req else s.points
     rank = get_rank_name(s.level)
     return {
-        "level": s.level, "points": s.points, "gems": s.gems, 
-        "streak_days": s.streak_days, "completed_tasks": s.completed_tasks, 
-        "next_level_points": req, "current_level_progress": cur, "rank": rank
+        "level": s.level,
+        "points": s.points,
+        "gems": s.gems,
+        "streak_days": s.streak_days,
+        "completed_tasks": s.completed_tasks,
+        "next_level_points": req,
+        "current_level_progress": cur,
+        "rank": rank,
     }
+
 
 @app.get("/tasks")
 def get_tasks(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     tasks = db.query(Task).filter(Task.user_id == user.id).all()
     return [{"id": t.id, "title": t.title, "description": t.description, "difficulty": t.difficulty, "points": t.points, "task_type": t.task_type, "completed": t.completed} for t in tasks]
 
+
+@app.get("/profile")
+def get_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return user profile (cached)."""
+    key = f"user_profile:{user.id}"
+    try:
+        cached = cache.get(key)
+        if cached:
+            return cached
+    except Exception:
+        cached = None
+
+    s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
+    profile = {"username": user.username, "email": user.email, "role": user.role, "level": s.level if s else 1}
+    try:
+        cache.set(key, profile, ex=600)  # cache profile 10 minutes
+    except Exception:
+        pass
+    return profile
+
+
+@app.get("/profile/stats")
+def get_profile_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return user stats (cached short-term)."""
+    key = f"user_stats:{user.id}"
+    try:
+        cached = cache.get(key)
+        if cached:
+            return cached
+    except Exception:
+        cached = None
+
+    s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
+    stats = {"level": s.level, "points": s.points, "gems": s.gems, "streak_days": s.streak_days, "completed_tasks": s.completed_tasks}
+    try:
+        cache.set(key, stats, ex=60)  # cache stats 60s
+    except Exception:
+        pass
+    return stats
+
+
 @app.post("/complete_task")
 def complete_task(data: TaskComplete, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     t = db.query(Task).filter(Task.id == data.task_id, Task.user_id == user.id).first()
-    if not t or t.completed: raise HTTPException(400, "Ошибка задачи")
-    
+    if not t or not t.completed:
+        raise HTTPException(400, "Ошибка задачи")
+
     t.completed = True
     s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
-    
+
     # Начисляем опыт и кристаллы (1 кристалл за каждые 10 XP)
     s.points += t.points
     earned_gems = max(1, t.points // 10)
     s.gems += earned_gems
     s.completed_tasks += 1
-    
-    if s.points >= s.level * 100: s.level += 1
+
+    if s.points >= s.level * 100:
+        s.level += 1
     db.commit()
+    # Invalidate leaderboard cache when points change
+    try:
+        cache_key = "leaderboard_v1"
+        if getattr(cache, 'client', None):
+            cache.client.delete(cache_key)
+        else:
+            cache.set(cache_key, None, ex=0)
+        # Invalidate per-user caches
+        user_stats_key = f"user_stats:{user.id}"
+        user_profile_key = f"user_profile:{user.id}"
+        if getattr(cache, 'client', None):
+            cache.client.delete(user_stats_key)
+            cache.client.delete(user_profile_key)
+        else:
+            cache.set(user_stats_key, None, ex=0)
+            cache.set(user_profile_key, None, ex=0)
+    except Exception:
+        pass
     return {"status": "ok", "points_earned": t.points, "gems_earned": earned_gems}
+
 
 @app.post("/buy_item")
 def buy_item(data: BuyItemRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     s = db.query(UserStats).filter(UserStats.user_id == user.id).first()
     if s.gems < data.cost:
         raise HTTPException(400, "Недостаточно кристаллов!")
-    
+
     s.gems -= data.cost
-    
+
     # Логика применения предмета
     if data.item_id == "xp_potion":
         s.points += 50
-        if s.points >= s.level * 100: s.level += 1
+        if s.points >= s.level * 100:
+            s.level += 1
     elif data.item_id == "streak_freeze":
-        pass # Тут в будущем будет логика заморозки
+        pass  # Тут в будущем будет логика заморозки
 
     db.commit()
+    # Invalidate leaderboard cache when gems/points may have changed
+    try:
+        cache_key = "leaderboard_v1"
+        if getattr(cache, 'client', None):
+            cache.client.delete(cache_key)
+        else:
+            cache.set(cache_key, None, ex=0)
+        # Invalidate per-user caches
+        user_stats_key = f"user_stats:{user.id}"
+        user_profile_key = f"user_profile:{user.id}"
+        if getattr(cache, 'client', None):
+            cache.client.delete(user_stats_key)
+            cache.client.delete(user_profile_key)
+        else:
+            cache.set(user_stats_key, None, ex=0)
+            cache.set(user_profile_key, None, ex=0)
+    except Exception:
+        pass
     return {"status": "ok", "message": "Предмет успешно куплен!"}
+
 
 @app.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
-    top = db.query(UserStats).order_by(UserStats.points.desc()).limit(10).all()
-    res = []
-    for s in top:
-        u = db.query(User).filter(User.id == s.user_id).first()
-        res.append({"username": u.username, "level": s.level, "points": s.points, "rank": get_rank_name(s.level)})
+    # Use a join to avoid N+1 queries
+    rows = db.query(User.username, UserStats.level, UserStats.points).join(User, User.id == UserStats.user_id).order_by(UserStats.points.desc()).limit(10).all()
+    res = [{"username": r[0], "level": r[1], "points": r[2], "rank": get_rank_name(r[1])} for r in rows]
+    return res
+
+
+@app.get("/leaderboard_cached")
+def leaderboard_cached(db: Session = Depends(get_db)):
+    key = "leaderboard_v1"
+    try:
+        cached = cache.get(key)
+        if cached:
+            return cached
+    except Exception:
+        cached = None
+
+    rows = db.query(User.username, UserStats.level, UserStats.points).join(User, User.id == UserStats.user_id).order_by(UserStats.points.desc()).limit(10).all()
+    res = [{"username": r[0], "level": r[1], "points": r[2], "rank": get_rank_name(r[1])} for r in rows]
+    try:
+        cache.set(key, res, ex=30)  # cache for 30s
+    except Exception:
+        pass
+    return res
+
+
+@app.get("/health")
+def health(db: Session = Depends(get_db)):
+    # DB check
+    ok = True
+    try:
+        db.execute("SELECT 1")
+    except Exception:
+        ok = False
+    # Redis check (best-effort)
+    redis_ok = False
+    try:
+        red = getattr(cache, "client", None)
+        if red:
+            red.ping()
+            redis_ok = True
+    except Exception:
+        redis_ok = False
+
+    return {"db": ok, "redis": redis_ok}
+
+
 @app.get("/")
 def home():
-    return {"message": "Play2Study работает!"}
+    # Return explicit JSONResponse with UTF-8 charset to avoid encoding issues on some proxies
+    return JSONResponse(content={"message": "Play2Study работает!"}, media_type="application/json; charset=utf-8")

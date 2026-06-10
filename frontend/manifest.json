@@ -1,0 +1,15 @@
+{
+  "name": "Aether Protocol — Frontend",
+  "short_name": "AETHER",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#10B981",
+  "icons": [
+    {
+      "src": "assets/leviathan-main.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
