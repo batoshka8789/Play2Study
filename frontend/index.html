@@ -13731,5 +13731,31 @@ document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 
+<form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+
+  <p hidden>
+    <input name="bot-field">
+  </p>
+
+  <p>
+    <label>Ваш email:
+      <input type="email" name="email" required>
+    </label>
+  </p>
+
+  <p>
+    <label>Сообщение:
+      <textarea name="message" required></textarea>
+    </label>
+  </p>
+
+  <div data-netlify-recaptcha="true"></div>
+
+  <p>
+    <button type="submit">Отправить</button>
+  </p>
+
+</form>
+
 </body>
 </html>

@@ -11,6 +11,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import random
 import string
+import os
+import json
+import urllib.parse
+import urllib.request
+from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
 # --- КОНФИГ ПОЧТЫ (ЗАПОЛНИ СВОИМИ ДАННЫМИ!) ---
@@ -30,6 +35,9 @@ SECRET_KEY = "super-secret-key-2026-change-this"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
+RECAPTCHA_SECRET = os.getenv("RECAPTCHA_SECRET")
+RECAPTCHA_SCORE_THRESHOLD = float(os.getenv("RECAPTCHA_SCORE_THRESHOLD", "0.5"))
+
 app = FastAPI(title="Play2Study API v2")
 
 app.add_middleware(
@@ -41,6 +49,8 @@ app.add_middleware(
 )
 
 # --- БАЗА ДАННЫХ ---
+load_dotenv()
+
 DATABASE_URL = "sqlite:///./play2study.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -84,12 +94,40 @@ def get_db():
     try: yield db
     finally: db.close()
 
+# --- reCAPTCHA ---
+def verify_recaptcha_token(token: str) -> bool:
+    if not token:
+        return False
+    if not RECAPTCHA_SECRET:
+        raise RuntimeError("RECAPTCHA_SECRET не задан в окружении")
+
+    data = urllib.parse.urlencode({
+        "secret": RECAPTCHA_SECRET,
+        "response": token,
+    }).encode("utf-8")
+    request = urllib.request.Request(
+        "https://www.google.com/recaptcha/api/siteverify",
+        data=data,
+        method="POST",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=10) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"reCAPTCHA verification error: {e}")
+        return False
+
+    return bool(result.get("success")) and float(result.get("score", 0)) >= RECAPTCHA_SCORE_THRESHOLD
+
 # --- СХЕМЫ ДАННЫХ ---
 class AuthRequest(BaseModel):
     username: str
     password: str
     email: Optional[EmailStr] = None
     register: bool
+    recaptcha_token: str
 
 class TaskComplete(BaseModel):
     task_id: int
@@ -129,6 +167,9 @@ def get_rank_name(level: int) -> str:
 # --- ЭНДПОИНТЫ АВТОРИЗАЦИИ ---
 @app.post("/auth")
 async def auth(data: AuthRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    if not verify_recaptcha_token(data.recaptcha_token):
+        raise HTTPException(400, "Проверка reCAPTCHA не пройдена")
+
     if data.register:
         if not data.email: raise HTTPException(400, "Email обязателен для регистрации")
         if db.query(User).filter((User.username == data.username) | (User.email == data.email)).first():
